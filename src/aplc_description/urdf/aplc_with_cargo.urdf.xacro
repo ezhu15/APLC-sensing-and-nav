@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="aplc_with_cargo">
+  <xacro:include filename="aplc.urdf.xacro"/>
+  <xacro:include filename="cargo_crate_macro.xacro"/>
+  <!-- Override with the measured combined mass of the crate and payload (kg). -->
+  <xacro:arg name="cargo_mass" default="1.0"/>
+  <xacro:cargo_crate parent="base_link" xyz="0 0 ${height / 2}"
+                     mass="$(arg cargo_mass)"/>
+</robot>

@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="cargo_crate">
+  <!-- Macro library; preview cargo_crate.urdf.xacro for a standalone crate.
+       Reusable cargo envelope: 14 L x 14 W x 12 H inches, in meters.
+       Modeled as a solid box, not a hollow container. Mass is a placeholder
+       for crate plus payload; inertia assumes a uniform mass distribution.
+       xyz locates the bottom-center of the crate in the parent frame. -->
+  <xacro:macro name="cargo_crate"
+               params="parent xyz:='0 0 0' name:=cargo_crate mass:=1.0 crate_length:=0.3556 crate_width:=0.3556 crate_height:=0.3048">
+    <link name="${name}_link">
+      <visual>
+        <origin xyz="0 0 ${crate_height / 2}"/>
+        <geometry>
+          <box size="${crate_length} ${crate_width} ${crate_height}"/>
+        </geometry>
+        <material name="${name}_brown">
+          <color rgba="0.65 0.42 0.20 1"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${crate_height / 2}"/>
+        <geometry>
+          <box size="${crate_length} ${crate_width} ${crate_height}"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <origin xyz="0 0 ${crate_height / 2}"/>
+        <mass value="${mass}"/>
+        <inertia ixx="${mass * (crate_width**2 + crate_height**2) / 12}"
+                 ixy="0" ixz="0"
+                 iyy="${mass * (crate_length**2 + crate_height**2) / 12}"
+                 iyz="0"
+                 izz="${mass * (crate_length**2 + crate_width**2) / 12}"/>
+      </inertial>
+    </link>
+    <joint name="${name}_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child link="${name}_link"/>
+      <origin xyz="${xyz}"/>
+    </joint>
+  </xacro:macro>
+</robot>
