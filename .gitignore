@@ -1,0 +1,9 @@
+build/
+install/
+log/
+__pycache__/
+*.pyc
+*.mcap
+*.db3
+.vscode/
+.DS_Store
