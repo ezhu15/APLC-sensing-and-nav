@@ -25,6 +25,8 @@ The repository is expected to contain ROS 2 packages with responsibilities simil
 ```text
 aplc/
 ├── README.md
+├── docker/               # Dockerfile and Compose configurations
+├── scripts/              # Host setup and container launch helpers
 ├── src/
 │   ├── aplc_description/   # Robot model, meshes, and sensor frames
 │   ├── aplc_bringup/       # Launch files and system configuration
@@ -40,15 +42,40 @@ aplc/
 
 ## Getting started
 
-### Prerequisites
+Choose Docker development below to build without installing ROS on the host,
+or use a native Ubuntu environment with ROS 2 Jazzy and matching Gazebo/ROS
+integration packages installed. Run host commands from the repository root.
 
-Install ROS 2 Jazzy and the matching Gazebo/ROS integration packages. A Linux development environment is recommended.
-With many of these details to be determined, I think it makes sense to support both a native ubuntu environment as well as docker images.
+### Docker development
 
-### Build
+On your Linux host, with Docker and Docker Compose installed, run as your
+regular user (without sudo):
 
-From the repository root (once the ROS 2 packages are populated):
-> Note that this is a template section for now, and may change depending on build needs.
+```bash
+bash scripts/docker-host-setup.sh
+bash scripts/docker-dev.sh build
+bash scripts/docker-dev.sh run --rm dev
+```
+
+The setup script creates or updates the repository's `.env` with your host
+user and group IDs so the container can write to the mounted workspace.
+Other `.env` settings are preserved. Run it once per machine, or again if
+your IDs change. `.env` is excluded from Git and the Docker build context.
+Unset any previously exported `LOCAL_UID` or `LOCAL_GID` values if they are
+incorrect: shell environment variables take precedence over `.env`.
+
+The Dockerfile and Compose files live in `docker/`. `.dockerignore` stays at
+the repository root (the build context) for compatibility with both classic
+Docker builds and BuildKit. The repository is mounted at `/ws`. The scripts explicitly load
+the root `.env` and select the Compose files, so no root Compose file is needed.
+`docker-dev.sh` forwards its arguments to Compose (for example, `config` or
+`build`). The project name stays `aplc-sensing-and-nav` for both launchers.
+
+The image creates a named `dev` user with these IDs and `/home/dev` as its
+home directory. Rebuild the image and start a new container after changing
+the IDs or updating the Dockerfile; existing containers keep their old setup.
+
+Inside the container:
 
 ```bash
 source /opt/ros/jazzy/setup.bash
@@ -56,7 +83,106 @@ colcon build --symlink-install
 source install/setup.bash
 ```
 
-### Run
+### Gazebo GUI container
+
+The separate `gazebo` service uses the same image and mounts the same repository
+at `/ws`. Run the host setup and image build above first, then launch it from
+your Linux desktop terminal:
+
+```bash
+bash scripts/docker-gazebo.sh
+```
+
+This starts Gazebo Harmonic's server and GUI with an empty world. It uses X11
+or XWayland (including a Wayland desktop), and requires `xauth` on the host.
+The launcher copies the current display authentication cookie into a temporary
+file, mounts it read-only, and removes it when the container exits. It does not
+change your display server's access policy.
+
+The launcher detects the local Linux host's GPU on each run and selects:
+
+1. NVIDIA when `nvidia-smi` works and Docker has an `nvidia` runtime.
+2. Intel/AMD Mesa using an available render node and its device group ID.
+3. Software rendering when neither is detected (slower for complex scenes).
+
+It prints the selected renderer. Override detection on hybrid machines or
+when troubleshooting:
+
+```bash
+bash scripts/docker-gazebo.sh --renderer nvidia
+bash scripts/docker-gazebo.sh --renderer mesa
+bash scripts/docker-gazebo.sh --renderer software
+```
+
+`--gpu` remains an alias for `--renderer mesa`. NVIDIA uses
+`docker/compose.gazebo.nvidia.yml`, including graphics/display driver capabilities
+and PRIME offload settings. Mesa uses `docker/compose.gazebo.gpu.yml` and passes
+through the first detected Intel/AMD render device.
+
+On NVIDIA machines, install the host NVIDIA driver and follow the
+[NVIDIA Container Toolkit installation and Docker configuration instructions](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
+first. This launcher selects container settings; it does not install host
+drivers, change Docker daemon settings, or restart Docker. If NVIDIA is
+detected but its Docker runtime is missing, auto mode explains the issue
+and falls back to Mesa or software. Explicit NVIDIA mode fails with guidance.
+Driver/runtime detection does not guarantee working OpenGL; if GUI startup
+fails, inspect the error or try `--renderer software`.
+
+This setup targets local Linux Docker Engine with X11/XWayland. Remote Docker
+hosts, Docker Desktop/WSL, and rootless GPU configurations need separate setup.
+
+To open a shell instead of starting the empty world:
+
+```bash
+bash scripts/docker-gazebo.sh bash
+```
+
+Inside that container:
+
+```bash
+source install/setup.bash
+# Run the merged package's actual ros2 launch command here.
+```
+
+After merging `src/aplc-gazebo`, its files are immediately visible in both
+containers. Add its package manifests to the Dockerfile's dependency COPY
+step and rebuild the image to install any additional rosdep dependencies.
+Then run `colcon build --symlink-install` in one container and source
+`install/setup.bash` in each shell that will use the new packages. The ROS
+package name comes from `package.xml`, not the folder name.
+
+Both services share `build/`, `install/`, and `log/`; do not build concurrently
+in the two containers. They also share the Compose network for ROS discovery;
+use the same `ROS_DOMAIN_ID` if you set one. Sharing files alone does not bridge
+Gazebo topics into ROS: the merged launch setup should start `ros_gz_bridge`
+with the needed topic mappings. No APLC world or launch file is assumed until
+that branch is merged.
+
+### Stopping Docker containers
+
+Exit an interactive container shell, or press Ctrl+C in the Gazebo launcher.
+To stop and remove this project's containers, including one-off containers
+created by the launch scripts, run on the host:
+
+```bash
+bash scripts/docker-dev.sh down --remove-orphans
+```
+
+The Docker image and files in the mounted workspace remain intact.
+
+### Native build
+
+With ROS 2 Jazzy, colcon, rosdep, and the required development tools installed,
+resolve package dependencies and build from the repository root:
+
+```bash
+source /opt/ros/jazzy/setup.bash
+rosdep install --from-paths src --ignore-src -r -y
+colcon build --symlink-install
+source install/setup.bash
+```
+
+### Running APLC
 
 After building and sourcing the workspace in a native ROS environment:
 
