@@ -1,0 +1,93 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro"
+       name="aplc">
+
+  <!-- SI units. 16 x 16-inch chassis footprint, with its top 12 inches
+       above ground. Sized to support a 14 L x 14 W x 12 H-inch crate;
+       cargo is not modeled. Robot height excludes the crate.
+       Wheel centers are at the front/rear chassis edges. Including wheels,
+       the footprint is 24 x approximately 21.12 inches. -->
+  <xacro:property name="inch" value="0.0254"/>
+  <xacro:property name="length" value="${16 * inch}"/>
+  <xacro:property name="width" value="${16 * inch}"/>
+  <xacro:property name="overall_height" value="${12 * inch}"/>
+  <xacro:property name="wheel_radius" value="${4 * inch}"/>
+  <!-- Wheel thickness and masses retained until measured values are available. -->
+  <xacro:property name="wheel_width" value="0.06"/>
+  <xacro:property name="chassis_mass" value="20.0"/>
+  <xacro:property name="wheel_mass" value="1.0"/>
+  <xacro:property name="wheel_gap" value="0.005"/>
+  <xacro:property name="overall_width" value="${width + 2 * (wheel_width + wheel_gap)}"/>
+  <!-- Axles level with chassis bottom: 4-inch ground clearance.
+       base_link remains at the center of the chassis. -->
+  <xacro:property name="height" value="${overall_height - wheel_radius}"/>
+  <xacro:property name="wheel_x" value="${length / 2}"/>
+  <xacro:property name="wheel_y" value="${(overall_width - wheel_width) / 2}"/>
+  <xacro:property name="wheel_z" value="${-height / 2}"/>
+
+  <!-- Main chassis -->
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <box size="${length} ${width} ${height}"/>
+      </geometry>
+      <material name="blue">
+        <color rgba="0.2 0.4 0.8 1"/>
+      </material>
+    </visual>
+
+    <collision>
+      <geometry>
+        <box size="${length} ${width} ${height}"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <mass value="${chassis_mass}"/>
+      <inertia ixx="${chassis_mass * (width**2 + height**2) / 12}" ixy="0" ixz="0"
+               iyy="${chassis_mass * (length**2 + height**2) / 12}" iyz="0"
+               izz="${chassis_mass * (length**2 + width**2) / 12}"/>
+    </inertial>
+  </link>
+
+  <!-- Reusable wheel definition -->
+  <xacro:macro name="wheel" params="name x y">
+    <link name="${name}_link">
+      <visual>
+        <origin rpy="${pi/2} 0 0"/>
+        <geometry>
+          <cylinder radius="${wheel_radius}"
+                    length="${wheel_width}"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin rpy="${pi/2} 0 0"/>
+        <geometry>
+          <cylinder radius="${wheel_radius}"
+                    length="${wheel_width}"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="${wheel_mass}"/>
+        <inertia ixx="${wheel_mass * (3 * wheel_radius**2 + wheel_width**2) / 12}" ixy="0" ixz="0"
+                 iyy="${wheel_mass * wheel_radius**2 / 2}" iyz="0"
+                 izz="${wheel_mass * (3 * wheel_radius**2 + wheel_width**2) / 12}"/>
+      </inertial>
+    </link>
+
+    <joint name="${name}_joint" type="continuous">
+      <parent link="base_link"/>
+      <child link="${name}_link"/>
+      <origin xyz="${x} ${y} ${wheel_z}"/>
+      <axis xyz="0 1 0"/>
+      <limit effort="10" velocity="20"/>
+    </joint>
+  </xacro:macro>
+
+  <!-- Four wheels -->
+  <xacro:wheel name="front_left"  x="${wheel_x}"  y="${wheel_y}"/>
+  <xacro:wheel name="front_right" x="${wheel_x}"  y="${-wheel_y}"/>
+  <xacro:wheel name="rear_left"   x="${-wheel_x}" y="${wheel_y}"/>
+  <xacro:wheel name="rear_right"  x="${-wheel_x}" y="${-wheel_y}"/>
+
+</robot>
