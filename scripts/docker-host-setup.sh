@@ -23,4 +23,4 @@ printf 'LOCAL_UID=%s\nLOCAL_GID=%s\n' "$(id -u)" "$(id -g)" >> "$temp_file"
 mv -- "$temp_file" "$env_file"
 
 printf 'Configured %s for host UID:GID %s:%s\n' "$env_file" "$(id -u)" "$(id -g)"
-printf 'From the repository root, run:\n  docker compose build\n  docker compose run --rm dev\n'
+printf 'From the repository root, run:\n  bash scripts/docker-dev.sh build\n  bash scripts/docker-dev.sh run --rm dev\n'

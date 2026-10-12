@@ -1,7 +1,10 @@
+name: aplc-sensing-and-nav
+
 services:
   dev:
     build:
-      context: .
+      context: ..
+      dockerfile: docker/Dockerfile
       args:
         LOCAL_UID: "${LOCAL_UID:?Set LOCAL_UID to your host user ID}"
         LOCAL_GID: "${LOCAL_GID:?Set LOCAL_GID to your host group ID}"
@@ -9,6 +12,6 @@ services:
     working_dir: /ws
     user: "${LOCAL_UID:?Set LOCAL_UID to your host user ID}:${LOCAL_GID:?Set LOCAL_GID to your host group ID}"
     volumes:
-      - .:/ws
+      - ..:/ws
     stdin_open: true
     tty: true
