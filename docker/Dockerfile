@@ -15,6 +15,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Cache package dependencies separately from source changes.
 COPY src/aplc_description/package.xml \
     /tmp/dependencies/aplc_description/package.xml
+COPY src/aplc_gazebo/package.xml \
+    /tmp/dependencies/aplc_gazebo/package.xml
 
 RUN source /opt/ros/jazzy/setup.bash \
     && rosdep update \
