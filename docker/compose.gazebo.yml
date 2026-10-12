@@ -9,6 +9,7 @@ services:
       QT_QPA_PLATFORM: xcb
       QT_X11_NO_MITSHM: "1"
       LIBGL_ALWAYS_SOFTWARE: "1"
+      APLC_WORLD: "${APLC_WORLD:-house_1.sdf}"
     volumes:
       - type: bind
         source: /tmp/.X11-unix
@@ -27,5 +28,14 @@ services:
       - bash
       - -c
       - |
-        if [ -f /ws/install/setup.bash ]; then source /ws/install/setup.bash; fi
-        exec gz sim -v 3 empty.sdf
+        set -e
+        if [ ! -f /ws/install/setup.bash ]; then
+          echo 'Build the workspace first: bash scripts/docker-dev.sh run --rm dev bash -c "colcon build --symlink-install"' >&2
+          exit 1
+        fi
+        source /ws/install/setup.bash
+        if ! ros2 pkg prefix aplc_gazebo > /dev/null 2>&1; then
+          echo 'aplc_gazebo is not installed. Rebuild the workspace with colcon build --symlink-install.' >&2
+          exit 1
+        fi
+        exec ros2 launch aplc_gazebo world.launch.py "world:=$$APLC_WORLD"

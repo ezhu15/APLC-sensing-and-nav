@@ -58,7 +58,62 @@ source install/setup.bash
 
 ### Run
 
-Launch commands will be added once the robot description and simulation launch files are implemented.
+After building and sourcing the workspace in a native ROS environment:
+
+```bash
+ros2 launch aplc_gazebo world.launch.py
+# Or select the other installed world:
+ros2 launch aplc_gazebo world.launch.py world:=house_ramp.sdf
+```
+
+### Docker and Gazebo GUI
+
+From the repository root in a Linux desktop terminal, with Docker Compose
+and `xauth` installed:
+
+```bash
+bash scripts/docker-host-setup.sh
+bash scripts/docker-dev.sh build
+bash scripts/docker-dev.sh run --rm dev bash -c 'colcon build --symlink-install'
+bash scripts/docker-gazebo.sh
+```
+
+The host setup writes your UID/GID to the local `.env`. Docker configuration
+lives in `docker/`; the scripts load `.env` and select the Compose files.
+The separate Gazebo container shares the workspace at `/ws` and starts
+`aplc_gazebo/world.launch.py` with `house_1.sdf`. Select the other world with:
+
+```bash
+APLC_WORLD=house_ramp.sdf bash scripts/docker-gazebo.sh
+```
+
+You can also set `APLC_WORLD` in `.env`. The GUI launcher automatically selects
+NVIDIA, Intel/AMD Mesa, or software rendering. NVIDIA requires the host driver
+and NVIDIA Container Toolkit configured for Docker. Override detection with
+`--renderer nvidia`, `--renderer mesa`, or `--renderer software`.
+GUI access uses X11/XWayland on the local Linux desktop.
+
+For an interactive simulation shell:
+
+```bash
+bash scripts/docker-gazebo.sh bash
+# Inside the container:
+source /opt/ros/jazzy/setup.bash
+source install/setup.bash
+ros2 launch aplc_gazebo world.launch.py world:=house_ramp.sdf
+```
+
+Rebuild the image after dependency changes, and rebuild the workspace after
+adding packages or launch files. Both containers share build outputs; do not
+build concurrently. To stop this project's containers, including one-off runs:
+
+```bash
+bash scripts/docker-dev.sh down --remove-orphans
+```
+
+The launches start the world and GUI, but do not yet spawn the APLC robot or
+bridge its ROS topics. Both worlds reference an SUV model on Gazebo Fuel;
+the first load needs network access to download it.
 
 ## Development roadmap
 
