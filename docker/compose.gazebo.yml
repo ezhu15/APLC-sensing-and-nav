@@ -1,0 +1,31 @@
+services:
+  gazebo:
+    extends:
+      file: compose.yml
+      service: dev
+    environment:
+      DISPLAY: "${DISPLAY:?Run from your graphical desktop session}"
+      XAUTHORITY: /tmp/container.xauth
+      QT_QPA_PLATFORM: xcb
+      QT_X11_NO_MITSHM: "1"
+      LIBGL_ALWAYS_SOFTWARE: "1"
+    volumes:
+      - type: bind
+        source: /tmp/.X11-unix
+        target: /tmp/.X11-unix
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: "${GAZEBO_XAUTHORITY:?Use scripts/docker-gazebo.sh}"
+        target: /tmp/container.xauth
+        read_only: true
+        bind:
+          create_host_path: false
+    shm_size: 1gb
+    command:
+      - bash
+      - -c
+      - |
+        if [ -f /ws/install/setup.bash ]; then source /ws/install/setup.bash; fi
+        exec gz sim -v 3 empty.sdf

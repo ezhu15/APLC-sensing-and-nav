@@ -1,0 +1,9 @@
+# Optional Intel/AMD Mesa acceleration; the launcher supplies device group IDs.
+services:
+  gazebo:
+    devices:
+      - "${GAZEBO_RENDER_DEVICE:?Use scripts/docker-gazebo.sh}:/dev/dri/${GAZEBO_RENDER_NODE:?Use scripts/docker-gazebo.sh}"
+    group_add:
+      - "${GAZEBO_RENDER_GID:?Use scripts/docker-gazebo.sh}"
+    environment:
+      LIBGL_ALWAYS_SOFTWARE: "0"
