@@ -90,4 +90,7 @@
   <xacro:wheel name="rear_left"   x="${-wheel_x}" y="${wheel_y}"/>
   <xacro:wheel name="rear_right"  x="${-wheel_x}" y="${-wheel_y}"/>
 
+  <!-- Simulation: wheel control through gz_ros2_control -->
+  <xacro:include filename="aplc.gazebo.xacro"/>
+
 </robot>
