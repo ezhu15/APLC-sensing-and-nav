@@ -93,7 +93,8 @@ your Linux desktop terminal:
 bash scripts/docker-gazebo.sh
 ```
 
-This starts Gazebo Harmonic's server and GUI with an empty world. It uses X11
+This starts Gazebo Harmonic's server and GUI with the selected house world
+paused and spawns APLC at `(5, -3, 0.25)`. It uses X11
 or XWayland (including a Wayland desktop), and requires `xauth` on the host.
 The launcher copies the current display authentication cookie into a temporary
 file, mounts it read-only, and removes it when the container exits. It does not
@@ -131,7 +132,7 @@ fails, inspect the error or try `--renderer software`.
 This setup targets local Linux Docker Engine with X11/XWayland. Remote Docker
 hosts, Docker Desktop/WSL, and rootless GPU configurations need separate setup.
 
-To open a shell instead of starting the empty world:
+To open a shell instead of starting the simulation:
 
 ```bash
 bash scripts/docker-gazebo.sh bash
@@ -184,9 +185,70 @@ source install/setup.bash
 
 ### Running APLC
 
-The Docker Gazebo launcher above opens an empty world. APLC-specific launch
-commands will be documented when robot visualization and simulation launch
-files are implemented or merged.
+After building and sourcing the workspace in a native ROS environment:
+
+```bash
+ros2 launch aplc_gazebo world.launch.py
+# Or select the other installed world:
+ros2 launch aplc_gazebo world.launch.py world:=house_ramp.sdf
+```
+
+### Docker and Gazebo GUI
+
+From the repository root in a Linux desktop terminal, with Docker Compose
+and `xauth` installed:
+
+```bash
+bash scripts/docker-host-setup.sh
+bash scripts/docker-dev.sh build
+bash scripts/docker-dev.sh run --rm dev bash -c 'colcon build --symlink-install'
+bash scripts/docker-gazebo.sh
+```
+
+The host setup writes your UID/GID to the local `.env`. Docker configuration
+lives in `docker/`; the scripts load `.env` and select the Compose files.
+The separate Gazebo container shares the workspace at `/ws` and starts
+`aplc_gazebo/world.launch.py` with `house_1.sdf`. Select the other world with:
+
+```bash
+APLC_WORLD=house_ramp.sdf bash scripts/docker-gazebo.sh
+```
+
+You can also set `APLC_WORLD` in `.env`. The GUI launcher automatically selects
+NVIDIA, Intel/AMD Mesa, or software rendering. NVIDIA requires the host driver
+and NVIDIA Container Toolkit configured for Docker. Override detection with
+`--renderer nvidia`, `--renderer mesa`, or `--renderer software`.
+GUI access uses X11/XWayland on the local Linux desktop.
+
+For an interactive simulation shell:
+
+```bash
+bash scripts/docker-gazebo.sh bash
+# Inside the container:
+source /opt/ros/jazzy/setup.bash
+source install/setup.bash
+ros2 launch aplc_gazebo world.launch.py world:=house_ramp.sdf
+```
+
+Rebuild the image after dependency changes, and rebuild the workspace after
+adding packages or launch files. Both containers share build outputs; do not
+build concurrently. To stop this project's containers, including one-off runs:
+
+```bash
+bash scripts/docker-dev.sh down --remove-orphans
+```
+
+The world launch also starts the robot description publisher and spawns the
+base APLC model (without cargo) at world coordinates `(5, -3, 0.25)` meters
+with zero roll, pitch, and yaw. Gazebo starts paused; wait for the robot to
+appear before pressing Play. Gravity then lets it settle onto the driveway,
+so its height will change from the initial spawn value.
+
+Do not launch a second description publisher alongside this world launch.
+The preview joint-state publisher is disabled and simulation time is enabled.
+ROS clock/joint-state bridges and drive control are not included yet; spawning
+does not require those bridges. Both worlds reference an SUV model on Gazebo
+Fuel; the first load needs network access to download it.
 
 ## Development roadmap
 

@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>aplc_gazebo</name>
+  <version>0.0.1</version>
+  <description>Gazebo worlds and simulation launch files for the APLC</description>
+  <maintainer email="ezhu15@jh.edu">APLC Team</maintainer>
+  <license>TODO</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <exec_depend>ros_gz_sim</exec_depend>
+  <export><build_type>ament_cmake</build_type></export>
+</package>
