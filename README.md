@@ -93,7 +93,8 @@ your Linux desktop terminal:
 bash scripts/docker-gazebo.sh
 ```
 
-This starts Gazebo Harmonic's server and GUI with an empty world. It uses X11
+This starts Gazebo Harmonic's server and GUI with the selected house world
+paused and spawns APLC at `(5, -3, 0.25)`. It uses X11
 or XWayland (including a Wayland desktop), and requires `xauth` on the host.
 The launcher copies the current display authentication cookie into a temporary
 file, mounts it read-only, and removes it when the container exits. It does not
@@ -131,7 +132,7 @@ fails, inspect the error or try `--renderer software`.
 This setup targets local Linux Docker Engine with X11/XWayland. Remote Docker
 hosts, Docker Desktop/WSL, and rootless GPU configurations need separate setup.
 
-To open a shell instead of starting the empty world:
+To open a shell instead of starting the simulation:
 
 ```bash
 bash scripts/docker-gazebo.sh bash
@@ -237,9 +238,17 @@ build concurrently. To stop this project's containers, including one-off runs:
 bash scripts/docker-dev.sh down --remove-orphans
 ```
 
-The launches start the world and GUI, but do not yet spawn the APLC robot or
-bridge its ROS topics. Both worlds reference an SUV model on Gazebo Fuel;
-the first load needs network access to download it.
+The world launch also starts the robot description publisher and spawns the
+base APLC model (without cargo) at world coordinates `(5, -3, 0.25)` meters
+with zero roll, pitch, and yaw. Gazebo starts paused; wait for the robot to
+appear before pressing Play. Gravity then lets it settle onto the driveway,
+so its height will change from the initial spawn value.
+
+Do not launch a second description publisher alongside this world launch.
+The preview joint-state publisher is disabled and simulation time is enabled.
+ROS clock/joint-state bridges and drive control are not included yet; spawning
+does not require those bridges. Both worlds reference an SUV model on Gazebo
+Fuel; the first load needs network access to download it.
 
 ## Development roadmap
 
