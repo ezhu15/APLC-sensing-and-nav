@@ -29,6 +29,13 @@ def generate_launch_description():
             cmd=['gz', 'sim', '-v', '3', world],
             output='screen',
         ),
+        # Gazebo's simulation clock for nodes with use_sim_time ('[' = Gazebo to ROS).
+        Node(
+            package='ros_gz_bridge',
+            executable='parameter_bridge',
+            arguments=['/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock'],
+            output='screen',
+        ),
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(PathJoinSubstitution([
                 FindPackageShare('aplc_description'),
