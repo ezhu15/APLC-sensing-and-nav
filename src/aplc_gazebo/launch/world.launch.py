@@ -1,7 +1,10 @@
 """Start a paused APLC world and spawn the robot at its initial pose."""
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, ExecuteProcess, IncludeLaunchDescription
+from launch.actions import (
+    DeclareLaunchArgument, ExecuteProcess, IncludeLaunchDescription, RegisterEventHandler,
+)
+from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
@@ -12,6 +15,33 @@ def generate_launch_description():
     world = PathJoinSubstitution([
         FindPackageShare('aplc_gazebo'), 'worlds', LaunchConfiguration('world')
     ])
+    # Both installed SDF files name their world "house_ramp". The create
+    # utility waits for the description and the world's creation service.
+    spawn_robot = Node(
+        package='ros_gz_sim',
+        executable='create',
+        arguments=[
+            '-world', 'house_ramp',
+            '-name', 'aplc',
+            '-topic', '/robot_description',
+            '-x', LaunchConfiguration('x'),
+            '-y', LaunchConfiguration('y'),
+            '-z', LaunchConfiguration('z'),
+            '-R', '0', '-P', '0', '-Y', LaunchConfiguration('yaw'),
+        ],
+        output='screen',
+    )
+    # The controller manager runs inside Gazebo, so it exists only once the robot is spawned.
+    # Activation needs the simulation running: allow 10 minutes to press Play.
+    spawn_controllers = Node(
+        package='controller_manager',
+        executable='spawner',
+        arguments=[
+            'joint_state_broadcaster', 'diff_drive_controller',
+            '--switch-timeout', '600', '--service-call-timeout', '610',
+        ],
+        output='screen',
+    )
     return LaunchDescription([
         DeclareLaunchArgument(
             'world', default_value='house_1.sdf',
@@ -46,20 +76,8 @@ def generate_launch_description():
                 'use_sim_time': 'true',
             }.items(),
         ),
-        # Both installed SDF files name their world "house_ramp". The create
-        # utility waits for the description and the world's creation service.
-        Node(
-            package='ros_gz_sim',
-            executable='create',
-            arguments=[
-                '-world', 'house_ramp',
-                '-name', 'aplc',
-                '-topic', '/robot_description',
-                '-x', LaunchConfiguration('x'),
-                '-y', LaunchConfiguration('y'),
-                '-z', LaunchConfiguration('z'),
-                '-R', '0', '-P', '0', '-Y', LaunchConfiguration('yaw'),
-            ],
-            output='screen',
-        ),
+        spawn_robot,
+        RegisterEventHandler(OnProcessExit(
+            target_action=spawn_robot, on_exit=[spawn_controllers],
+        )),
     ])
