@@ -238,17 +238,53 @@ build concurrently. To stop this project's containers, including one-off runs:
 bash scripts/docker-dev.sh down --remove-orphans
 ```
 
-The world launch also starts the robot description publisher and spawns the
-base APLC model (without cargo) at world coordinates `(5, -3, 0.25)` meters
-with zero roll, pitch, and yaw. Gazebo starts paused; wait for the robot to
-appear before pressing Play. Gravity then lets it settle onto the driveway,
-so its height will change from the initial spawn value.
+The world launch also starts the robot description publisher, bridges the
+Gazebo clock to `/clock`, and spawns the base APLC model (without cargo) on
+the driveway at world coordinates `(5, -3, 0.25)` meters with zero roll,
+pitch, and yaw. Gazebo starts paused; wait for the robot to appear before
+pressing Play. Gravity then lets it settle: `base_link` rests 0.203 m above
+the ground, so its height will change from the initial spawn value.
+
+Choose another spawn pose with the `x`, `y`, `z` (meters) and `yaw` (radians)
+arguments. Indoors and on the landing the floor is at z = 0.45, so use
+`z:=0.70`:
+
+```bash
+# Inside the house, facing the front door:
+ros2 launch aplc_gazebo world.launch.py x:=-1.2 y:=3.5 z:=0.70 yaw:=0
+# On the landing, facing down the ramp:
+ros2 launch aplc_gazebo world.launch.py x:=0.6 y:=3.5 z:=0.70 yaw:=-1.5708
+```
 
 Do not launch a second description publisher alongside this world launch.
 The preview joint-state publisher is disabled and simulation time is enabled.
-ROS clock/joint-state bridges and drive control are not included yet; spawning
-does not require those bridges. Both worlds reference an SUV model on Gazebo
-Fuel; the first load needs network access to download it.
+Both worlds reference an SUV model on Gazebo Fuel; the first load needs
+network access to download it.
+
+### Driving the robot
+
+After the spawn, the launch starts `joint_state_broadcaster` and
+`diff_drive_controller` (configured in `aplc_control/config/controllers.yaml`).
+The controllers can only activate while the simulation runs, so the spawner
+waits up to 10 minutes for Play. Until then, `ros2 control` commands hang.
+
+After pressing Play, drive by keyboard from a second terminal:
+
+```bash
+ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args \
+  -p stamped:=true -p use_sim_time:=true -r cmd_vel:=/diff_drive_controller/cmd_vel
+```
+
+Hold `i`/`,` to drive forward/backward and `j`/`l` to turn in place; `k`
+stops. The robot brakes 0.5 s after the last command, so it stops when you
+release the key. Keep `use_sim_time:=true`: with wall-clock timestamps that
+timeout never triggers. Speeds are limited to 0.5 m/s and 1.0 rad/s.
+
+While no command arrives, the launch logs "Velocity command timed out.
+Braking." once a second; this is normal. The controllers publish
+`/joint_states`, wheel odometry on `/diff_drive_controller/odom`, and the
+`odom` → `base_link` transform. Wheel odometry overestimates turns because
+the four wheels skid sideways.
 
 ## Development roadmap
 
