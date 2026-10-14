@@ -1,4 +1,4 @@
-"""Start a paused APLC world and spawn the robot at its initial pose."""
+"""Start an APLC world with GUI driving and spawn the robot."""
 
 from launch import LaunchDescription
 from launch.actions import (
@@ -14,6 +14,9 @@ from launch_ros.substitutions import FindPackageShare
 def generate_launch_description():
     world = PathJoinSubstitution([
         FindPackageShare('aplc_gazebo'), 'worlds', LaunchConfiguration('world')
+    ])
+    gui_config = PathJoinSubstitution([
+        FindPackageShare('aplc_gazebo'), 'config', 'gui.config'
     ])
     # Both installed SDF files name their world "house_ramp". The create
     # utility waits for the description and the world's creation service.
@@ -32,7 +35,7 @@ def generate_launch_description():
         output='screen',
     )
     # The controller manager runs inside Gazebo, so it exists only once the robot is spawned.
-    # Activation needs the simulation running: allow 10 minutes to press Play.
+    # Physics starts automatically so controller activation can complete.
     spawn_controllers = Node(
         package='controller_manager',
         executable='spawner',
@@ -56,14 +59,23 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument('yaw', default_value='0.0', description='Spawn yaw (rad).'),
         ExecuteProcess(
-            cmd=['gz', 'sim', '-v', '3', world],
+            cmd=['gz', 'sim', '-r', '-v', '3', '--gui-config', gui_config, world],
             output='screen',
         ),
         # Gazebo's simulation clock for nodes with use_sim_time ('[' = Gazebo to ROS).
         Node(
             package='ros_gz_bridge',
             executable='parameter_bridge',
-            arguments=['/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock'],
+            arguments=[
+                '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',
+                '/gui/cmd_vel@geometry_msgs/msg/Twist[gz.msgs.Twist',
+            ],
+            output='screen',
+        ),
+        Node(
+            package='aplc_gazebo',
+            executable='stamp_cmd_vel.py',
+            parameters=[{'use_sim_time': True}],
             output='screen',
         ),
         IncludeLaunchDescription(

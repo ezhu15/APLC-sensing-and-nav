@@ -94,7 +94,9 @@ bash scripts/docker-gazebo.sh
 ```
 
 This starts Gazebo Harmonic's server and GUI with the selected house world
-paused and spawns APLC at `(5, -3, 0.25)`. It uses X11
+running and spawns APLC at `(5, -3, 0.25)`, with the Drive APLC panel open.
+It refreshes the `aplc_gazebo` build so new GUI assets and helper scripts are
+installed after branch updates. It uses X11
 or XWayland (including a Wayland desktop), and requires `xauth` on the host.
 The launcher copies the current display authentication cookie into a temporary
 file, mounts it read-only, and removes it when the container exits. It does not
@@ -241,8 +243,8 @@ bash scripts/docker-dev.sh down --remove-orphans
 The world launch also starts the robot description publisher, bridges the
 Gazebo clock to `/clock`, and spawns the base APLC model (without cargo) on
 the driveway at world coordinates `(5, -3, 0.25)` meters with zero roll,
-pitch, and yaw. Gazebo starts paused; wait for the robot to appear before
-pressing Play. Gravity then lets it settle: `base_link` rests 0.203 m above
+pitch, and yaw. Gazebo starts running and activates the drive controllers
+automatically. Gravity lets it settle: `base_link` rests 0.203 m above
 the ground, so its height will change from the initial spawn value.
 
 Choose another spawn pose with the `x`, `y`, `z` (meters) and `yaw` (radians)
@@ -265,10 +267,25 @@ network access to download it.
 
 After the spawn, the launch starts `joint_state_broadcaster` and
 `diff_drive_controller` (configured in `aplc_control/config/controllers.yaml`).
-The controllers can only activate while the simulation runs, so the spawner
-waits up to 10 minutes for Play. Until then, `ros2 control` commands hang.
+Physics starts automatically; once the robot appears and the controllers finish
+loading, use the **Drive APLC** panel in Gazebo. No second terminal or Play click
+is needed. Select the panel's **Keyboard** tab to enable **W/S** for
+forward/backward and **A/D** for turning, with the Gazebo window focused.
+Release the keys to stop. Gazebo's built-in panel opens on its **Buttons** tab;
+keyboard input is enabled only while its Keyboard tab is selected.
 
-After pressing Play, drive by keyboard from a second terminal:
+The GUI topic is preconfigured as `/gui/cmd_vel`. The launch bridges it to ROS
+and `stamp_cmd_vel.py` adds simulation-time timestamps before forwarding to
+`/diff_drive_controller/cmd_vel`. Commands are forwarded only when received;
+the controller brakes after 0.5 s without a new command. The panel's buttons
+and sliders send on changes, so they produce short movements rather than
+continuous driving; use Keyboard for sustained driving (desktop key repeat
+must be enabled). Speeds remain limited by the controller to 0.5 m/s and
+1.0 rad/s, regardless of the panel's maximum velocity settings. Vertical
+commands (Q/E) have no effect on this ground robot.
+
+Terminal teleoperation remains available as an alternative; avoid operating
+both inputs at once:
 
 ```bash
 ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args \

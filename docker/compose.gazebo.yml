@@ -38,4 +38,7 @@ services:
           echo 'aplc_gazebo is not installed. Rebuild the workspace with colcon build --symlink-install.' >&2
           exit 1
         fi
+        # Install new GUI assets and helper executables after branch updates.
+        colcon build --symlink-install --packages-select aplc_gazebo
+        source /ws/install/setup.bash
         exec ros2 launch aplc_gazebo world.launch.py "world:=$$APLC_WORLD"
