@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!-- Intel RealSense RGB-D camera: frames and visual from realsense2_description,
+       plus a Gazebo rgbd_camera sensor. Included by aplc.urdf.xacro.
+
+       Frames (name = "camera"): camera_bottom_screw_frame (mount point, the origin
+       below), camera_link, camera_depth_frame (x forward), camera_depth_optical_frame
+       (z forward, x right, y down: the ROS convention for images and point clouds),
+       camera_color_frame / camera_color_optical_frame, infra1/infra2 frames.
+
+       Gazebo renders color and depth from one viewpoint, so the simulated depth is
+       already registered to color, like the real driver's aligned_depth_to_color. -->
+
+  <!-- Depth specs at 848x480 from the Intel datasheet (FOV in degrees, min-Z/max range in m). -->
+  <xacro:property name="rs_specs" value="${dict(
+      d435=dict(hfov=87.0, near=0.20, far=10.0),
+      d435i=dict(hfov=87.0, near=0.20, far=10.0),
+      d455=dict(hfov=87.0, near=0.52, far=10.0))}"/>
+
+  <xacro:macro name="aplc_rgbd_camera" params="model parent xyz rpy name:=camera width:=848 height:=480 rate:=30 noise:=0.01">
+    <xacro:property name="spec" value="${rs_specs[model]}"/>
+
+    <!-- Nominal extrinsics: in simulation nothing else publishes the camera's internal frames. -->
+    <xacro:call macro="sensor_${model}" parent="${parent}" name="${name}" use_nominal_extrinsics="true">
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+    </xacro:call>
+
+    <!-- The sensor sits on the x-forward depth frame: Gazebo cameras look along +x.
+         gz_frame_id stamps images and camera_info with the optical frame. -->
+    <gazebo reference="${name}_link">
+      <sensor name="${name}" type="rgbd_camera">
+        <always_on>true</always_on>
+        <update_rate>${rate}</update_rate>
+        <visualize>false</visualize>
+        <topic>${name}</topic>
+        <gz_frame_id>${name}_depth_optical_frame</gz_frame_id>
+        <camera name="${name}">
+          <horizontal_fov>${spec['hfov'] * pi / 180}</horizontal_fov>
+          <image>
+            <width>${width}</width>
+            <height>${height}</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>${spec['near']}</near>
+            <far>${spec['far']}</far>
+          </clip>
+          <!-- Gaussian noise on image and depth (m). Only applied with the ogre2 render
+               engine; ogre (1) silently ignores it. -->
+          <noise>
+            <type>gaussian</type>
+            <mean>0.0</mean>
+            <stddev>${noise}</stddev>
+          </noise>
+        </camera>
+      </sensor>
+    </gazebo>
+  </xacro:macro>
+</robot>

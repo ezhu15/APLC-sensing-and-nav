@@ -90,4 +90,21 @@
   <xacro:wheel name="rear_left"   x="${-wheel_x}" y="${wheel_y}"/>
   <xacro:wheel name="rear_right"  x="${-wheel_x}" y="${-wheel_y}"/>
 
+  <!-- Simulation: wheel control through gz_ros2_control -->
+  <xacro:include filename="aplc.gazebo.xacro"/>
+
+  <!-- RGB-D camera. Model: d435, d435i or d455. The pose locates the camera's bottom
+       tripod screw in base_link; the default centers it on the chassis front face.
+       Placement is a placeholder until the mechanical layout is decided. -->
+  <xacro:arg name="camera" default="true"/>
+  <xacro:arg name="camera_model" default="d435"/>
+  <xacro:arg name="camera_xyz" default="${length / 2 + 0.003} 0 0.02"/>
+  <xacro:arg name="camera_rpy" default="0 0 0"/>
+  <xacro:if value="$(arg camera)">
+    <xacro:include filename="$(find realsense2_description)/urdf/_$(arg camera_model).urdf.xacro"/>
+    <xacro:include filename="aplc_camera.xacro"/>
+    <xacro:aplc_rgbd_camera model="$(arg camera_model)" parent="base_link"
+                            xyz="$(arg camera_xyz)" rpy="$(arg camera_rpy)"/>
+  </xacro:if>
+
 </robot>

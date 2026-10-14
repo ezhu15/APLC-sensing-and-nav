@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>aplc_control</name>
+  <version>0.0.1</version>
+  <description>ros2_control controller configuration for the APLC</description>
+  <maintainer email="ezhu15@jh.edu">APLC Team</maintainer>
+  <license>TODO</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <exec_depend>controller_manager</exec_depend>
+  <exec_depend>diff_drive_controller</exec_depend>
+  <exec_depend>joint_state_broadcaster</exec_depend>
+  <export><build_type>ament_cmake</build_type></export>
+</package>
