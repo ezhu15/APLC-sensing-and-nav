@@ -92,6 +92,10 @@ def generate_launch_description():
             description='ogre works in VMs; ogre2 is needed for camera noise.',
         ),
         DeclareLaunchArgument(
+            'rviz', default_value='false',
+            description='Also open RViz with the robot, TF, depth cloud and camera image.',
+        ),
+        DeclareLaunchArgument(
             'paused', default_value='false',
             description='Start Gazebo paused; controllers then activate only after pressing Play.',
         ),
@@ -169,6 +173,12 @@ def generate_launch_description():
                 '-Y', LaunchConfiguration('car_yaw'),
             ],
             output='screen',
+        ),
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(PathJoinSubstitution([
+                FindPackageShare('aplc_gazebo'), 'launch', 'rviz.launch.py',
+            ])),
+            condition=IfCondition(LaunchConfiguration('rviz')),
         ),
         spawn_robot,
         RegisterEventHandler(OnProcessExit(

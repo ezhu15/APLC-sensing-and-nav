@@ -73,6 +73,7 @@ Pass any of these as `name:=value`. Distances in meters, angles in radians.
 | `camera_xyz` | `"0.2062 0 0.02"` | Camera mount (bottom tripod screw) in `base_link`. Default: centered on the front face |
 | `camera_rpy` | `"0 0 0"` | Camera roll, pitch, yaw. Positive pitch tilts it down |
 | `render_engine` | `ogre` | `ogre` works in VMs. `ogre2` is needed for camera noise (ogre ignores it) |
+| `rviz` | `false` | `true` also opens RViz with the saved configuration (see section 5) |
 | `paused` | `false` | `true` starts Gazebo paused; the controllers then activate only after you press Play |
 
 Examples:
@@ -161,6 +162,29 @@ Quick checks:
 ros2 topic hz /camera/camera/color/image_raw        # ~30 Hz
 ros2 control list_controllers                        # both controllers "active"
 ```
+
+## 5. Open RViz with the saved configuration
+
+The saved configuration (`src/aplc_gazebo/rviz/aplc_sim.rviz`) opens with the robot model,
+TF, the depth point cloud (`/camera/camera/depth/color/points`, in its true colors) and the
+color image panel already set up. Fixed Frame is `odom`, and the view follows the robot.
+
+With the simulation running, in another terminal:
+
+```bash
+source /opt/ros/jazzy/setup.bash
+source install/setup.bash
+ros2 launch aplc_gazebo rviz.launch.py
+```
+
+Or start the simulation and RViz together:
+
+```bash
+ros2 launch aplc_gazebo world.launch.py rviz:=true
+```
+
+To use your own configuration: `ros2 launch aplc_gazebo rviz.launch.py rviz_config:=/path/to/file.rviz`.
+If you change the view and want to keep it, use **File → Save Config As** and pass that file.
 
 ## Other robot topics
 
