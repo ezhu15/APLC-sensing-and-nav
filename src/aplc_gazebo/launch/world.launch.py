@@ -134,7 +134,7 @@ def generate_launch_description():
                     ('rgb/image_rect_color', '/camera/camera/color/image_raw'),
                     ('rgb/camera_info', '/camera/camera/color/camera_info'),
                     ('depth_registered/image_rect', '/camera/camera/aligned_depth_to_color/image_raw'),
-                    ('depth_registered/points', '/camera/camera/depth/color/points'),
+                    ('points', '/camera/camera/depth/color/points'),
                 ],
                 parameters=[{'use_sim_time': True}],
             )],
