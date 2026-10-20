@@ -269,6 +269,18 @@ Fuel; the first load needs network access to download it.
 
 Actual sensor selection and hardware interfaces are subject to change. Safety mechanisms must be validated on physical hardware before real-world use.
 
+## Sensors
+
+Simulated sensors are documented in [`docs/sensors/`](docs/sensors/): what each one
+models, its ROS topic and frame, noise parameters and their datasheet sources, how to
+verify it, and known gaps between simulation and hardware.
+
+| Sensor | Hardware | ROS topic | Docs |
+|---|---|---|---|
+| IMU | CEVA BNO085 | `/imu` | [docs/sensors/imu.md](docs/sensors/imu.md) |
+| RGB-D camera | Intel RealSense D435 | `/camera/camera/...` | [instructions.md](instructions.md) |
+| Wheel encoders | — | `/joint_states` | [instructions.md](instructions.md) |
+
 ## Project status
 
 **Early development — simulation-first.** Features described above are goals, not necessarily implemented functionality.
