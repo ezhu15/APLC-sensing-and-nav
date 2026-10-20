@@ -15,7 +15,7 @@ diff_drive_controller:
     right_wheel_names: [front_right_joint, rear_right_joint]
     wheel_separation: 0.4764  # between left and right wheel centers (m)
     wheel_radius: 0.1016      # m
-    base_frame_id: base_link
+    base_frame_id: base_footprint
     odom_frame_id: odom
     enable_odom_tf: true  # false once robot_localization publishes odom -> base (#9)
     # Unset reverse and deceleration limits default to the same magnitudes.

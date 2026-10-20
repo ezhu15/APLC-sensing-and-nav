@@ -11,7 +11,7 @@ Gazebo wheel joints
   └─ gz_ros2_control (state interfaces: position, velocity)
        ├─ joint_state_broadcaster ─► /joint_states            exact angles and speeds
        │                                 └─ wheel_encoders node ─► /wheel_encoders   ticks, jitter
-       └─ diff_drive_controller ─► /diff_drive_controller/odom  + TF odom → base_link
+       └─ diff_drive_controller ─► /diff_drive_controller/odom
 ```
 
 - **`/joint_states`** is published by `joint_state_broadcaster` from the simulated wheel
@@ -32,7 +32,7 @@ ticks per revolution the difference is far smaller than wheel slip (see below).
 |---|---|---|---|
 | `/joint_states` | `sensor_msgs/msg/JointState` | 50 Hz | Exact position (rad) and velocity (rad/s) of `front_left_joint`, `front_right_joint`, `rear_left_joint`, `rear_right_joint`. Effort is `nan` |
 | `/wheel_encoders` | `sensor_msgs/msg/JointState` | 50 Hz | Same joints. Position = whole ticks × 2π / ticks_per_rev. Velocity from tick differences. Same timestamps as `/joint_states` |
-| `/diff_drive_controller/odom` | `nav_msgs/msg/Odometry` | 50 Hz | Wheel odometry in `odom`, child frame `base_link`, with covariances |
+| `/diff_drive_controller/odom` | `nav_msgs/msg/Odometry` | 50 Hz | Wheel odometry in `odom`, child frame `base_footprint`, with covariances |
 
 The rate is the controller manager's `update_rate` (50 Hz) in
 `src/aplc_control/config/controllers.yaml`.

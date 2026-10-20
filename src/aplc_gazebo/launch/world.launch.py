@@ -55,8 +55,9 @@ def generate_launch_description():
         DeclareLaunchArgument('x', default_value='5.0', description='Robot spawn x position (m).'),
         DeclareLaunchArgument('y', default_value='-3.0', description='Robot spawn y position (m).'),
         DeclareLaunchArgument(
-            'z', default_value='0.25',
-            description='Robot spawn height of base_link (m); it rests 0.203 m above the ground.',
+            'z', default_value='0.05',
+            description='Robot spawn height of base_footprint (m), the ground point under the robot; '
+                        'it settles to the floor height (0 outside, 0.45 indoors).',
         ),
         DeclareLaunchArgument(
             'yaw', default_value='3.14159',

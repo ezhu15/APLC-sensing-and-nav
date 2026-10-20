@@ -25,6 +25,15 @@
   <xacro:property name="wheel_y" value="${(overall_width - wheel_width) / 2}"/>
   <xacro:property name="wheel_z" value="${-height / 2}"/>
 
+  <!-- Root frame on the ground, directly under the chassis center (REP 105). Planar
+       navigation and the EKF track this frame; base_link sits above it. -->
+  <link name="base_footprint"/>
+  <joint name="base_footprint_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 ${height / 2 + wheel_radius}"/>
+  </joint>
+
   <!-- Main chassis -->
   <link name="base_link">
     <visual>

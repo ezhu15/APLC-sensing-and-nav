@@ -63,7 +63,7 @@ Pass any of these as `name:=value`. Distances in meters, angles in radians.
 | Argument | Default | What it does |
 |---|---|---|
 | `world` | `house_1.sdf` | `house_1.sdf` (furnished two-storey house) or `house_ramp.sdf` (solid house, exterior only) |
-| `x`, `y`, `z` | `5.0`, `-3.0`, `0.25` | Robot spawn position. Default is on the driveway. Indoors the floor is at z = 0.45, so use `z:=0.70` |
+| `x`, `y`, `z` | `5.0`, `-3.0`, `0.05` | Robot spawn position of `base_footprint` (the ground point under the robot). Default is on the driveway. Indoors the floor is at z = 0.45, so use `z:=0.50` |
 | `yaw` | `3.14159` | Robot heading. Default faces the house |
 | `car` | `true` | Spawn the parked RAV4 |
 | `car_x`, `car_y` | `7.0`, `-3.4` | Car **rear bumper center**. The driveway spans x 2 to 14, y −5.15 to −1.65 |
@@ -87,7 +87,7 @@ Examples:
 
 ```bash
 # Robot inside the house, facing the front door
-ros2 launch aplc_gazebo world.launch.py x:=-1.2 y:=3.5 z:=0.70 yaw:=0
+ros2 launch aplc_gazebo world.launch.py x:=-1.2 y:=3.5 z:=0.50 yaw:=0
 
 # Car parked further down the driveway, slightly angled
 ros2 launch aplc_gazebo world.launch.py car_x:=9.0 car_y:=-2.8 car_yaw:=0.15
@@ -205,7 +205,7 @@ If you change the view and want to keep it, use **File → Save Config As** and 
 | `/joint_states` | `sensor_msgs/JointState`, exact wheel angles and speeds, 50 Hz |
 | `/wheel_encoders` | `sensor_msgs/JointState`, quantized encoder readings, 50 Hz. Details: [docs/sensors/wheel_encoders.md](docs/sensors/wheel_encoders.md) |
 | `/imu` | `sensor_msgs/Imu`, frame `imu_link`, 100 Hz. Details: [docs/sensors/imu.md](docs/sensors/imu.md) |
-| `/tf`, `/tf_static` | `odom → base_link → wheels, camera frames` |
+| `/tf`, `/tf_static` | `odom → base_footprint → base_link → wheels, camera, imu_link` |
 | `/clock` | simulation time |
 
 ## Troubleshooting

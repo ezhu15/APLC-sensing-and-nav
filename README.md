@@ -94,7 +94,7 @@ bash scripts/docker-gazebo.sh
 ```
 
 This starts Gazebo Harmonic's server and GUI with the selected house world
-paused and spawns APLC at `(5, -3, 0.25)`. It uses X11
+paused and spawns APLC at `(5, -3, 0.05)`. It uses X11
 or XWayland (including a Wayland desktop), and requires `xauth` on the host.
 The launcher copies the current display authentication cookie into a temporary
 file, mounts it read-only, and removes it when the container exits. It does not
@@ -239,7 +239,7 @@ bash scripts/docker-dev.sh down --remove-orphans
 ```
 
 The world launch also starts the robot description publisher and spawns the
-base APLC model (without cargo) at world coordinates `(5, -3, 0.25)` meters
+base APLC model (without cargo) at world coordinates `(5, -3, 0.05)` meters
 with zero roll, pitch, and yaw. Gazebo starts paused; wait for the robot to
 appear before pressing Play. Gravity then lets it settle onto the driveway,
 so its height will change from the initial spawn value.
