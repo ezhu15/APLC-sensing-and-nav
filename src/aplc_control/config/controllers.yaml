@@ -32,7 +32,7 @@ diff_drive_controller:
     #   vy 0.001: skid steer barely slips sideways when not turning.
     #   z, roll, pitch 1e6: wheels don't measure them.
     #   yaw 0.25 (sd 0.5 rad/s): skid-steer slip makes the wheel turn rate read
-    #      1.48-1.56x the true rate in sim (about +0.35 rad/s at 1 rad/s). The error is
+    #      about 1.49x the true rate in sim (about +0.33 rad/s at 1 rad/s). The error is
     #      systematic, so this only tells the EKF to trust the gyro instead.
     # Pose: the controller publishes these as constants (they don't grow with distance),
     #   so the EKF should fuse the twist, not the pose. yaw 1e3: heading from wheels

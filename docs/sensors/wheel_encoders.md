@@ -89,27 +89,37 @@ Why:
 
 ## Measured slip (simulation, house_1.sdf driveway, asphalt)
 
-Each test drives until the **odometry** reports the target, stops, then compares with
-Gazebo ground truth. Speeds are commanded on `/diff_drive_controller/cmd_vel`.
+**Headline number: in-place turns, odometry / truth = 1.49** (steady turning at 0.5 rad/s,
+measured over a 14 s window: odometry 400.5°, truth 269.0°). Straight driving: 1.00.
+
+Odometry and ground truth are always read **at the same instant**. Speeds are commanded on
+`/diff_drive_controller/cmd_vel`. Whole-motion tests drive until the odometry reports the
+target, then wait until the robot has stopped (the controller keeps turning for about a
+second after the last command: 0.5 s brake timeout, then a 1 rad/s² deceleration ramp).
 
 | Test | Odometry | Ground truth | Ratio |
 |---|---|---|---|
 | Straight, 0.3 m/s, 2 m | 2.094 m | 2.094 m | truth / odom = **1.000** |
-| Spin in place, 0.5 rad/s | 97.98° | 62.90° | odom / truth = **1.558** |
-| Spin in place, 1.0 rad/s | 120.32° | 81.58° | odom / truth = **1.475** |
-| Spin in place, −1.0 rad/s | −120.32° | −81.58° | odom / truth = **1.475** |
-
-(The odometry passes 90° because the controller decelerates at 1 rad/s² after the stop;
-the ratio uses the whole motion.)
+| Steady spin, 0.5 rad/s, 14 s window | 400.5° | 269.0° | odom / truth = **1.489** |
+| Spin to 90° (odom), 0.5 rad/s, whole motion | 97.98° / 112.30° | 62.90° / 76.53° | 1.558 / 1.467 (two runs) |
+| Spin to 90° (odom), 1.0 rad/s, whole motion | 120.32° / 148.97° | 81.58° / 98.86° | 1.475 / 1.507 (two runs) |
+| Spin to 90° (odom), −1.0 rad/s, whole motion | −120.32° | −81.58° | 1.475 |
 
 - Straight driving: no measurable slip.
-- Turning: the wheel odometry reports **1.48–1.56×** the real rotation. The robot really
-  turns only 64–68 % of what the wheels say. Left and right turns are symmetric.
+- Turning: the wheel odometry reports about **1.5×** the real rotation (1.49 steady; whole
+  motions 1.40–1.56 because spinning up and slowing down slip differently, and runs vary by
+  about ±0.05). The robot really turns only about two thirds of what the wheels say. Left
+  and right turns are symmetric.
+- An earlier quick test reported 1.24× (82.5° vs 66.8°). That was a measurement error: it
+  read the odometry when the commands stopped but the ground truth after the robot had
+  coasted to a stop. Repeating that exact test with both read at the same moment gives
+  1.53 (at stop) and 1.56 (after stopping).
 - Cause: on a four-wheel skid-steer robot the wheels must scrape sideways to turn, so the
   wheel speeds overstate the rotation. The effective wheel separation is about 1.5× the
   geometric 0.4764 m.
 
-`wheel_separation_multiplier` stays at 1.0 for now; tuning it belongs with the EKF (#9).
+`wheel_separation_multiplier` stays at 1.0 for now. The measurement suggests about 1.49 for
+in-place turns on this surface; whether to apply it is decided with the EKF (#9).
 
 ## How to verify
 
