@@ -121,6 +121,11 @@ def generate_launch_description():
             description='ogre works in VMs; ogre2 is needed for camera noise.',
         ),
         DeclareLaunchArgument(
+            'localization', default_value='true',
+            description='Start the EKF (aplc_localization), which publishes odom -> base_footprint. '
+                        'With false, nothing publishes that transform.',
+        ),
+        DeclareLaunchArgument(
             'rviz', default_value='false',
             description='Also open RViz with the robot, TF, depth cloud and camera image.',
         ),
@@ -206,6 +211,12 @@ def generate_launch_description():
                 '-Y', LaunchConfiguration('car_yaw'),
             ],
             output='screen',
+        ),
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(PathJoinSubstitution([
+                FindPackageShare('aplc_localization'), 'launch', 'localization.launch.py',
+            ])),
+            condition=IfCondition(LaunchConfiguration('localization')),
         ),
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(PathJoinSubstitution([

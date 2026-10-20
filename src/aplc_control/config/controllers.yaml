@@ -17,7 +17,9 @@ diff_drive_controller:
     wheel_radius: 0.1016      # m
     base_frame_id: base_footprint
     odom_frame_id: odom
-    enable_odom_tf: true  # false once robot_localization publishes odom -> base (#9)
+    # The EKF (aplc_localization) publishes odom -> base_footprint; only one node may.
+    # /diff_drive_controller/odom is still published and is the EKF's wheel input.
+    enable_odom_tf: false
     # Unset reverse and deceleration limits default to the same magnitudes.
     linear.x.max_velocity: 0.5       # m/s
     linear.x.max_acceleration: 0.5   # m/s^2
