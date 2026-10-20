@@ -72,6 +72,10 @@ Pass any of these as `name:=value`. Distances in meters, angles in radians.
 | `camera_model` | `d435` | `d435`, `d435i` or `d455` |
 | `camera_xyz` | `"0.2062 0 0.02"` | Camera mount (bottom tripod screw) in `base_link`. Default: centered on the front face |
 | `camera_rpy` | `"0 0 0"` | Camera roll, pitch, yaw. Positive pitch tilts it down |
+| `imu_xyz` | `"0 0 0"` | IMU (`imu_link`) position in `base_link`. Default: chassis center |
+| `imu_rpy` | `"0 0 0"` | IMU roll, pitch, yaw in `base_link` |
+| `imu_gyro_bias` | `0.017453` | Gyro bias per axis (rad/s), BNO085 raw typical 1 °/s. `0` = calibrated |
+| `imu_accel_bias` | `0.784532` | Accel bias per axis (m/s²), BNO085 raw typical 80 mg. `0` = calibrated |
 | `render_engine` | `ogre` | `ogre` works in VMs. `ogre2` is needed for camera noise (ogre ignores it) |
 | `rviz` | `false` | `true` also opens RViz with the saved configuration (see section 5) |
 | `paused` | `false` | `true` starts Gazebo paused; the controllers then activate only after you press Play |
@@ -91,9 +95,12 @@ ros2 launch aplc_gazebo world.launch.py camera_model:=d455 \
 
 # No car, no camera (lighter)
 ros2 launch aplc_gazebo world.launch.py car:=false camera:=false
+
+# IMU with no bias (ideal on-chip calibration), noise only
+ros2 launch aplc_gazebo world.launch.py imu_gyro_bias:=0 imu_accel_bias:=0
 ```
 
-Arguments that need spaces (`camera_xyz`, `camera_rpy`) must be quoted.
+Arguments that need spaces (`camera_xyz`, `camera_rpy`, `imu_xyz`, `imu_rpy`) must be quoted.
 
 ## 3. Drive the robot (teleop)
 
@@ -193,6 +200,7 @@ If you change the view and want to keep it, use **File → Save Config As** and 
 | `/diff_drive_controller/cmd_vel` | `geometry_msgs/TwistStamped` (input) |
 | `/diff_drive_controller/odom` | `nav_msgs/Odometry` (wheel odometry) |
 | `/joint_states` | `sensor_msgs/JointState` (wheel encoders) |
+| `/imu` | `sensor_msgs/Imu`, frame `imu_link`, 100 Hz. Details: [docs/sensors/imu.md](docs/sensors/imu.md) |
 | `/tf`, `/tf_static` | `odom → base_link → wheels, camera frames` |
 | `/clock` | simulation time |
 
