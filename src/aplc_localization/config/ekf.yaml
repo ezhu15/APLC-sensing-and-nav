@@ -1,0 +1,20 @@
+# robot_localization EKF for the APLC (#9): fuses wheel odometry and the IMU into
+# /odometry/filtered and the odom -> base_footprint transform.
+# Sensor inputs are configured below the frame settings. See docs/localization/ekf.md.
+ekf_filter_node:
+  ros__parameters:
+    # Filter update rate (Hz). Matches the wheel odometry (50 Hz); the IMU (100 Hz) is
+    # buffered and fused at each update.
+    frequency: 50.0
+    # Planar robot: ignore z, roll and pitch (and their rates) in the state. The ramp is
+    # 4.8 deg; a 2D vs 3D comparison there is an open item.
+    two_d_mode: true
+    # The EKF publishes odom -> base_footprint; diff_drive_controller's TF is disabled.
+    publish_tf: true
+
+    # REP 105 frames. world_frame = odom: a continuous, drifting estimate with no jumps.
+    # A map frame (global localization) comes later.
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_footprint
+    world_frame: odom
