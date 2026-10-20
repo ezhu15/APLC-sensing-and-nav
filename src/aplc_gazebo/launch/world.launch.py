@@ -3,9 +3,10 @@ bridge clock and camera topics to ROS, and build the camera point cloud."""
 
 from launch import LaunchDescription
 from launch.actions import (
-    DeclareLaunchArgument, ExecuteProcess, IncludeLaunchDescription, RegisterEventHandler,
+    DeclareLaunchArgument, ExecuteProcess, IncludeLaunchDescription, OpaqueFunction,
+    RegisterEventHandler,
 )
-from launch.conditions import IfCondition, UnlessCondition
+from launch.conditions import IfCondition
 from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
@@ -13,6 +14,19 @@ from launch_ros.actions import ComposableNodeContainer, Node
 from launch_ros.descriptions import ComposableNode
 from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
+
+
+def gz_sim(context, world):
+    """Gazebo command line from the gui, paused, seed and render_engine arguments."""
+    arg = lambda name: LaunchConfiguration(name).perform(context)
+    cmd = ['gz', 'sim', '-v', '3', '--render-engine', arg('render_engine')]
+    if arg('paused').lower() != 'true':
+        cmd.append('-r')      # run immediately; spawning works either way
+    if arg('gui').lower() != 'true':
+        cmd.append('-s')      # server only, no GUI window
+    if arg('seed'):
+        cmd += ['--seed', arg('seed')]   # repeatable sensor noise and bias signs
+    return [ExecuteProcess(cmd=cmd + [world.perform(context)], output='screen')]
 
 
 def generate_launch_description():
@@ -133,17 +147,17 @@ def generate_launch_description():
             'paused', default_value='false',
             description='Start Gazebo paused; controllers then activate only after pressing Play.',
         ),
-        # '-r' runs the simulation immediately. Spawning works either way.
-        ExecuteProcess(
-            cmd=['gz', 'sim', '-r', '-v', '3', '--render-engine', LaunchConfiguration('render_engine'), world],
-            condition=UnlessCondition(LaunchConfiguration('paused')),
-            output='screen',
+        DeclareLaunchArgument('gui', default_value='true', description='Open the Gazebo GUI.'),
+        DeclareLaunchArgument(
+            'seed', default_value='',
+            description='Gazebo random seed (sensor noise, bias signs). Empty = random each launch.',
         ),
-        ExecuteProcess(
-            cmd=['gz', 'sim', '-v', '3', '--render-engine', LaunchConfiguration('render_engine'), world],
-            condition=IfCondition(LaunchConfiguration('paused')),
-            output='screen',
+        DeclareLaunchArgument(
+            'ekf_config',
+            default_value=PathJoinSubstitution([FindPackageShare('aplc_localization'), 'config', 'ekf.yaml']),
+            description='robot_localization parameter file for the EKF.',
         ),
+        OpaqueFunction(function=gz_sim, args=[world]),
         # Clock and camera topics; see config/bridge.yaml.
         Node(
             package='ros_gz_bridge',
@@ -216,6 +230,7 @@ def generate_launch_description():
             PythonLaunchDescriptionSource(PathJoinSubstitution([
                 FindPackageShare('aplc_localization'), 'launch', 'localization.launch.py',
             ])),
+            launch_arguments={'ekf_config': LaunchConfiguration('ekf_config')}.items(),
             condition=IfCondition(LaunchConfiguration('localization')),
         ),
         IncludeLaunchDescription(
