@@ -20,6 +20,10 @@ def generate_launch_description():
             ' camera_model:=', LaunchConfiguration('camera_model'),
             ' camera_xyz:="', LaunchConfiguration('camera_xyz'), '"',
             ' camera_rpy:="', LaunchConfiguration('camera_rpy'), '"',
+            ' imu_xyz:="', LaunchConfiguration('imu_xyz'), '"',
+            ' imu_rpy:="', LaunchConfiguration('imu_rpy'), '"',
+            ' imu_gyro_bias:=', LaunchConfiguration('imu_gyro_bias'),
+            ' imu_accel_bias:=', LaunchConfiguration('imu_accel_bias'),
         ]),
         value_type=str,
     )
@@ -48,6 +52,21 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'camera_rpy', default_value='0 0 0',
             description='Camera roll pitch yaw in base_link (rad); positive pitch tilts it down.',
+        ),
+        DeclareLaunchArgument(
+            'imu_xyz', default_value='0 0 0',
+            description='IMU (imu_link) position in base_link (m); default: chassis center.',
+        ),
+        DeclareLaunchArgument(
+            'imu_rpy', default_value='0 0 0', description='IMU roll pitch yaw in base_link (rad).',
+        ),
+        DeclareLaunchArgument(
+            'imu_gyro_bias', default_value='0.017453',
+            description='Gyro bias magnitude per axis (rad/s); BMF055 typ 1 deg/s. 0 = calibrated.',
+        ),
+        DeclareLaunchArgument(
+            'imu_accel_bias', default_value='0.784532',
+            description='Accel bias magnitude per axis (m/s^2); BMF055 typ 80 mg. 0 = calibrated.',
         ),
         Node(
             package='robot_state_publisher',

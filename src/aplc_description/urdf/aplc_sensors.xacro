@@ -17,4 +17,70 @@
                             xyz="$(arg camera_xyz)" rpy="$(arg camera_rpy)"/>
   </xacro:if>
 
+  <!-- IMU: CEVA BNO085. Default mount: chassis center, which is the center of mass
+       (base_link origin; the wheels are placed symmetrically). -->
+  <xacro:arg name="imu_xyz" default="0 0 0"/>
+  <xacro:arg name="imu_rpy" default="0 0 0"/>
+  <!-- Per-axis constant bias magnitude; Gazebo picks a random sign per axis each run.
+       Defaults are the raw sensor's typical offsets (see below). On hardware the BNO085's
+       dynamic calibration removes most of this; set both to 0 to model that. -->
+  <xacro:arg name="imu_gyro_bias" default="0.017453"/>
+  <xacro:arg name="imu_accel_bias" default="0.784532"/>
+
+  <!-- Noise sources. The BNO08X datasheet (CEVA 1000-3927 v1.17, sec. 6.6) sets the
+       ranges to +/-8 g and +/-2000 deg/s and refers to the Bosch BMF055 datasheet for the
+       raw sensors (BST-BMF055-DS000-04, rev 0.4, Nov 2020):
+         accelerometer output noise density 150 ug/sqrt(Hz) typ   (p. 8)
+         accelerometer zero-g offset          +/-80 mg typ        (p. 8, +/-150 max)
+         gyroscope output noise density       0.014 deg/s/sqrt(Hz) (p. 9; the rms value
+                                              is cut off in the datasheet table)
+         gyroscope zero-rate offset           +/-1 deg/s typ      (p. 9, +/-3 max)
+       Per-sample stddev = density * sqrt(bandwidth), bandwidth = 50 Hz (Nyquist at 100 Hz):
+         gyro  0.014 deg/s/sqrt(Hz) * sqrt(50) = 0.099 deg/s = 0.001728 rad/s
+         accel 150e-6 g/sqrt(Hz)    * sqrt(50) * 9.80665     = 0.010402 m/s^2
+       Bias: 1 deg/s = 0.017453 rad/s; 80 mg = 0.784532 m/s^2.
+       Gazebo fills the Imu covariance diagonals with stddev^2 (gyro 2.99e-6,
+       accel 1.08e-4); the constant bias is not part of the covariance. -->
+  <xacro:property name="imu_gyro_stddev" value="0.001728"/>
+  <xacro:property name="imu_accel_stddev" value="0.010402"/>
+
+  <link name="imu_link"/>
+  <joint name="imu_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="imu_link"/>
+    <origin xyz="$(arg imu_xyz)" rpy="$(arg imu_rpy)"/>
+  </joint>
+
+  <xacro:macro name="imu_axis_noise" params="axis stddev bias">
+    <xacro:element xacro:name="${axis}">
+      <noise type="gaussian">
+        <mean>0.0</mean>
+        <stddev>${stddev}</stddev>
+        <bias_mean>${bias}</bias_mean>
+        <bias_stddev>0.0</bias_stddev>
+      </noise>
+    </xacro:element>
+  </xacro:macro>
+
+  <gazebo reference="imu_link">
+    <sensor name="imu" type="imu">
+      <always_on>true</always_on>
+      <update_rate>100</update_rate>
+      <topic>imu</topic>
+      <gz_frame_id>imu_link</gz_frame_id>
+      <imu>
+        <angular_velocity>
+          <xacro:imu_axis_noise axis="x" stddev="${imu_gyro_stddev}" bias="$(arg imu_gyro_bias)"/>
+          <xacro:imu_axis_noise axis="y" stddev="${imu_gyro_stddev}" bias="$(arg imu_gyro_bias)"/>
+          <xacro:imu_axis_noise axis="z" stddev="${imu_gyro_stddev}" bias="$(arg imu_gyro_bias)"/>
+        </angular_velocity>
+        <linear_acceleration>
+          <xacro:imu_axis_noise axis="x" stddev="${imu_accel_stddev}" bias="$(arg imu_accel_bias)"/>
+          <xacro:imu_axis_noise axis="y" stddev="${imu_accel_stddev}" bias="$(arg imu_accel_bias)"/>
+          <xacro:imu_axis_noise axis="z" stddev="${imu_accel_stddev}" bias="$(arg imu_accel_bias)"/>
+        </linear_acceleration>
+      </imu>
+    </sensor>
+  </gazebo>
+
 </robot>

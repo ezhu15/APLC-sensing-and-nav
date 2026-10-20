@@ -35,6 +35,14 @@
   gz_type_name: gz.msgs.CameraInfo
   direction: GZ_TO_ROS
 
+# IMU (sensor <topic>imu</topic>), frame imu_link, 100 Hz. Covariances come from the
+# noise stddev set in aplc_description/urdf/aplc_sensors.xacro.
+- ros_topic_name: /imu
+  gz_topic_name: /imu
+  ros_type_name: sensor_msgs/msg/Imu
+  gz_type_name: gz.msgs.IMU
+  direction: GZ_TO_ROS
+
 # Not bridged: /camera/points. Gazebo fills it in camera-body axes (x forward) but
 # stamps it with gz_frame_id (the optical frame), so it would appear rotated in RViz.
 # world.launch.py builds /camera/camera/depth/color/points with depth_image_proc instead.
