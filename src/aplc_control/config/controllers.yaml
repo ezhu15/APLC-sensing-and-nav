@@ -23,3 +23,19 @@ diff_drive_controller:
     linear.x.max_acceleration: 0.5   # m/s^2
     angular.z.max_velocity: 1.0      # rad/s
     angular.z.max_acceleration: 1.0  # rad/s^2
+
+    # Odometry covariance diagonals [x, y, z, roll, pitch, yaw], published on
+    # /diff_drive_controller/odom for the EKF (#9). See docs/sensors/wheel_encoders.md.
+    # Twist (velocities; what the EKF should fuse):
+    #   vx 0.001 (sd 0.03 m/s): straight runs matched ground truth in sim, but real
+    #      floors slip; ~6 % of top speed.
+    #   vy 0.001: skid steer barely slips sideways when not turning.
+    #   z, roll, pitch 1e6: wheels don't measure them.
+    #   yaw 0.25 (sd 0.5 rad/s): skid-steer slip makes the wheel turn rate read
+    #      1.48-1.56x the true rate in sim (about +0.35 rad/s at 1 rad/s). The error is
+    #      systematic, so this only tells the EKF to trust the gyro instead.
+    # Pose: the controller publishes these as constants (they don't grow with distance),
+    #   so the EKF should fuse the twist, not the pose. yaw 1e3: heading from wheels
+    #   is unreliable after any turn.
+    pose_covariance_diagonal: [0.01, 0.01, 1000000.0, 1000000.0, 1000000.0, 1000.0]
+    twist_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 0.25]
