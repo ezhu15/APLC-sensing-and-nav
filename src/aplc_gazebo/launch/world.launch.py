@@ -11,6 +11,7 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import ComposableNodeContainer, Node
 from launch_ros.descriptions import ComposableNode
+from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
 
 
@@ -101,6 +102,18 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'imu_accel_bias', default_value='0.784532',
             description='Accel bias magnitude per axis (m/s^2); BMF055 typ 80 mg. 0 = calibrated.',
+        ),
+        DeclareLaunchArgument(
+            'wheel_encoders', default_value='true',
+            description='Publish quantized, noisy encoder data on /wheel_encoders.',
+        ),
+        DeclareLaunchArgument(
+            'encoder_ticks_per_rev', default_value='1024',
+            description='Encoder ticks per wheel revolution (placeholder until hardware is chosen).',
+        ),
+        DeclareLaunchArgument(
+            'encoder_tick_noise', default_value='0.25',
+            description='Encoder edge jitter, stddev in ticks.',
         ),
         DeclareLaunchArgument(
             'render_engine', default_value='ogre', choices=['ogre', 'ogre2'],
@@ -198,6 +211,18 @@ def generate_launch_description():
                 FindPackageShare('aplc_gazebo'), 'launch', 'rviz.launch.py',
             ])),
             condition=IfCondition(LaunchConfiguration('rviz')),
+        ),
+        # Real-world-like encoder readings from the ideal /joint_states.
+        Node(
+            package='aplc_gazebo',
+            executable='wheel_encoders',
+            condition=IfCondition(LaunchConfiguration('wheel_encoders')),
+            parameters=[{
+                'use_sim_time': True,
+                'ticks_per_rev': ParameterValue(LaunchConfiguration('encoder_ticks_per_rev'), value_type=int),
+                'tick_noise_stddev': ParameterValue(LaunchConfiguration('encoder_tick_noise'), value_type=float),
+            }],
+            output='screen',
         ),
         spawn_robot,
         RegisterEventHandler(OnProcessExit(
