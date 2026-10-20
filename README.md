@@ -279,7 +279,7 @@ verify it, and known gaps between simulation and hardware.
 |---|---|---|---|
 | IMU | CEVA BNO085 | `/imu` | [docs/sensors/imu.md](docs/sensors/imu.md) |
 | RGB-D camera | Intel RealSense D435 | `/camera/camera/...` | [instructions.md](instructions.md) |
-| Wheel encoders | — | `/joint_states` | [instructions.md](instructions.md) |
+| Wheel encoders | — | `/joint_states`, `/wheel_encoders`, `/diff_drive_controller/odom` | [docs/sensors/wheel_encoders.md](docs/sensors/wheel_encoders.md) |
 
 ## Project status
 
