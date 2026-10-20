@@ -43,6 +43,17 @@
   gz_type_name: gz.msgs.IMU
   direction: GZ_TO_ROS
 
+# GROUND TRUTH: FOR EVALUATION ONLY. NEVER AN EKF (OR ANY ESTIMATOR) INPUT.
+# Exact pose of base_footprint in frame ground_truth_world, from Gazebo's
+# OdometryPublisher (aplc_description/urdf/aplc.gazebo.xacro). Only the odometry is
+# bridged: the plugin's TF topic (/ground_truth/tf) is deliberately not bridged, so the
+# only odom -> base_footprint transform on /tf stays the EKF's.
+- ros_topic_name: /ground_truth/odom
+  gz_topic_name: /ground_truth/odom
+  ros_type_name: nav_msgs/msg/Odometry
+  gz_type_name: gz.msgs.Odometry
+  direction: GZ_TO_ROS
+
 # Not bridged: /camera/points. Gazebo fills it in camera-body axes (x forward) but
 # stamps it with gz_frame_id (the optical frame), so it would appear rotated in RViz.
 # world.launch.py builds /camera/camera/depth/color/points with depth_image_proc instead.

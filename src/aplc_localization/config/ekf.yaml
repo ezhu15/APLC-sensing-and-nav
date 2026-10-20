@@ -22,6 +22,8 @@ ekf_filter_node:
     # Diagnostics on /diagnostics (input timeouts, bad covariances).
     print_diagnostics: true
 
+    # Never add /ground_truth/odom (Gazebo's exact pose) as an input: it exists only to
+    # evaluate this filter.
     # Inputs. Each *_config selects which fields are fused, in the order
     #   [x, y, z,  roll, pitch, yaw,  vx, vy, vz,  vroll, vpitch, vyaw,  ax, ay, az]
     # The filter uses the covariances each message carries (set in controllers.yaml and
