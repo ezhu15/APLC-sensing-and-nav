@@ -110,6 +110,9 @@ second after the last command: 0.5 s brake timeout, then a 1 rad/s² deceleratio
   motions 1.40–1.56 because spinning up and slowing down slip differently, and runs vary by
   about ±0.05). The robot really turns only about two thirds of what the wheels say. Left
   and right turns are symmetric.
+- **1.49 is a starting point, not a constant.** Slip changes with turn rate (whole-motion
+  ratios differ between 0.5 and 1.0 rad/s) and with turning while driving forward (arcs),
+  which these in-place tests don't cover. Treat it as the in-place figure for this surface.
 - An earlier quick test reported 1.24× (82.5° vs 66.8°). That was a measurement error: it
   read the odometry when the commands stopped but the ground truth after the robot had
   coasted to a stop. Repeating that exact test with both read at the same moment gives
