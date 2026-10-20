@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!-- Onboard sensors, included by aplc.urdf.xacro after the chassis is defined.
+       Mount poses are xacro args (and launch args of the same name); placements are
+       placeholders until the mechanical layout is decided. -->
+
+  <!-- RGB-D camera. Model: d435, d435i or d455. The pose locates the camera's bottom
+       tripod screw in base_link; the default centers it on the chassis front face. -->
+  <xacro:arg name="camera" default="true"/>
+  <xacro:arg name="camera_model" default="d435"/>
+  <xacro:arg name="camera_xyz" default="${length / 2 + 0.003} 0 0.02"/>
+  <xacro:arg name="camera_rpy" default="0 0 0"/>
+  <xacro:if value="$(arg camera)">
+    <xacro:include filename="$(find realsense2_description)/urdf/_$(arg camera_model).urdf.xacro"/>
+    <xacro:include filename="aplc_camera.xacro"/>
+    <xacro:aplc_rgbd_camera model="$(arg camera_model)" parent="base_link"
+                            xyz="$(arg camera_xyz)" rpy="$(arg camera_rpy)"/>
+  </xacro:if>
+
+</robot>
