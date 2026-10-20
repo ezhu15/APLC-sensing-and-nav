@@ -1,6 +1,6 @@
 # robot_localization EKF for the APLC (#9): fuses wheel odometry and the IMU into
 # /odometry/filtered and the odom -> base_footprint transform.
-# Sensor inputs are configured below the frame settings. See docs/localization/ekf.md.
+# See docs/localization/ekf.md.
 ekf_filter_node:
   ros__parameters:
     # Filter update rate (Hz). Matches the wheel odometry (50 Hz); the IMU (100 Hz) is
@@ -18,3 +18,98 @@ ekf_filter_node:
     odom_frame: odom
     base_link_frame: base_footprint
     world_frame: odom
+
+    # Diagnostics on /diagnostics (input timeouts, bad covariances).
+    print_diagnostics: true
+
+    # Inputs. Each *_config selects which fields are fused, in the order
+    #   [x, y, z,  roll, pitch, yaw,  vx, vy, vz,  vroll, vpitch, vyaw,  ax, ay, az]
+    # The filter uses the covariances each message carries (set in controllers.yaml and
+    # by the simulated IMU's noise); nothing here overrides them.
+
+    # Wheel odometry (diff_drive_controller, 50 Hz, child frame base_footprint).
+    # Fused: vx and vy (forward speed, and ~0 sideways speed, which stops the estimate
+    # drifting sideways).
+    # Not fused: x, y, yaw - the odometry's own integrated pose; the filter integrates
+    #   the velocities itself.
+    # Not fused: vyaw - this deviates from issue #9's starting config. On the four-wheel
+    #   skid-steer base the wheels scrape sideways when turning, so the wheel turn rate
+    #   reads about 1.49x the true rate (docs/sensors/wheel_encoders.md). That error is
+    #   systematic, not noise, so no covariance can describe it; the gyro measures the
+    #   turn rate directly.
+    odom0: /diff_drive_controller/odom
+    odom0_config: [false, false, false,
+                   false, false, false,
+                   true,  true,  false,
+                   false, false, false,
+                   false, false, false]
+    odom0_differential: false
+    odom0_relative: false
+    odom0_queue_size: 10
+
+    # IMU (simulated BNO085, /imu, 100 Hz, frame imu_link).
+    # Fused: vyaw (gyro z), the turn rate.
+    # Not fused: orientation. Gazebo's IMU orientation is ideal (no noise, zero
+    #   covariance) and would hide the drift a real sensor has; in two_d_mode roll and
+    #   pitch are ignored anyway (issue #9 suggested fusing them).
+    # Not fused: accelerations (issue #9: "off at first"). The simulated accelerometer
+    #   has a constant 80 mg bias, which the filter would integrate into a false velocity.
+    # Topic is /imu, not /imu/data as in the issue: that is what the sensor publishes.
+    imu0: /imu
+    imu0_config: [false, false, false,
+                  false, false, false,
+                  false, false, false,
+                  false, false, true,
+                  false, false, false]
+    imu0_differential: false
+    imu0_relative: false
+    imu0_queue_size: 10
+    # Subtract gravity before using accelerations. No effect while ax is off; set so that
+    # turning ax on (evaluation, step 6) behaves correctly.
+    imu0_remove_gravitational_acceleration: true
+
+    # Process noise Q: how much each state may change between updates beyond what the
+    # motion model predicts (scaled by the time step). Larger = follow measurements faster.
+    # Diagonal only; only x, y, yaw, vx, vy, vyaw, ax, ay matter in two_d_mode.
+    #   x, y 0.05 / yaw 0.06: pose follows the velocities; robot_localization defaults.
+    #   vx 0.05: the robot accelerates at up to 0.5 m/s^2, so speed changes quickly.
+    #   vy 0.01: a skid steer barely moves sideways; keep lateral speed near zero.
+    #   vyaw 0.1: turn rate changes at up to 1 rad/s^2; high enough to track the gyro
+    #       (variance 3e-6) closely through starts and stops of a turn.
+    #   ax, ay 0.01: not measured; kept small so they don't drift.
+    #   z, roll, pitch and their rates: unused in two_d_mode (defaults).
+    process_noise_covariance: [  0.05,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  # x
+          0.0,   0.05,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  # y
+          0.0,    0.0,   0.06,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  # z
+          0.0,    0.0,    0.0,   0.03,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  # roll
+          0.0,    0.0,    0.0,    0.0,   0.03,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  # pitch
+          0.0,    0.0,    0.0,    0.0,    0.0,   0.06,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  # yaw
+          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,   0.05,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  # vx
+          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,   0.01,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  # vy
+          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,   0.04,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  # vz
+          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,   0.01,    0.0,    0.0,    0.0,    0.0,    0.0,  # vroll
+          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,   0.01,    0.0,    0.0,    0.0,    0.0,  # vpitch
+          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.1,    0.0,    0.0,    0.0,  # vyaw
+          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,   0.01,    0.0,    0.0,  # ax
+          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,   0.01,    0.0,  # ay
+          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  0.015]  # az
+
+    # Initial covariance P0: how uncertain the state is at startup.
+    #   Pose 1e-9: odom is defined as the pose where the filter starts, so it is exact.
+    #   Velocities and accelerations 1e-6: the robot spawns at rest; small but not zero, so
+    #       the first measurements still update them.
+    initial_estimate_covariance: [ 1.0e-9,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  # x
+          0.0,  1.0e-9,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  # y
+          0.0,    0.0,  1.0e-9,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  # z
+          0.0,    0.0,    0.0,  1.0e-9,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  # roll
+          0.0,    0.0,    0.0,    0.0,  1.0e-9,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  # pitch
+          0.0,    0.0,    0.0,    0.0,    0.0,  1.0e-9,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  # yaw
+          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  1.0e-6,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  # vx
+          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  1.0e-6,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  # vy
+          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  1.0e-6,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  # vz
+          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  1.0e-6,    0.0,    0.0,    0.0,    0.0,    0.0,  # vroll
+          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  1.0e-6,    0.0,    0.0,    0.0,    0.0,  # vpitch
+          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  1.0e-6,    0.0,    0.0,    0.0,  # vyaw
+          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  1.0e-6,    0.0,    0.0,  # ax
+          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  1.0e-6,    0.0,  # ay
+          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,  1.0e-6]  # az
