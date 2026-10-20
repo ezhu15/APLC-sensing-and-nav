@@ -80,6 +80,7 @@ Pass any of these as `name:=value`. Distances in meters, angles in radians.
 | `encoder_ticks_per_rev` | `1024` | Encoder ticks per wheel revolution (placeholder until hardware is chosen) |
 | `encoder_tick_noise` | `0.25` | Encoder edge jitter, stddev in ticks |
 | `render_engine` | `ogre` | `ogre` works in VMs. `ogre2` is needed for camera noise (ogre ignores it) |
+| `localization` | `true` | Start the EKF (`aplc_localization`). It publishes `/odometry/filtered` and the `odom → base_footprint` transform; with `false` nothing publishes that transform |
 | `rviz` | `false` | `true` also opens RViz with the saved configuration (see section 5) |
 | `paused` | `false` | `true` starts Gazebo paused; the controllers then activate only after you press Play |
 
@@ -201,11 +202,12 @@ If you change the view and want to keep it, use **File → Save Config As** and 
 | Topic | Type |
 |---|---|
 | `/diff_drive_controller/cmd_vel` | `geometry_msgs/TwistStamped` (input) |
-| `/diff_drive_controller/odom` | `nav_msgs/Odometry` (wheel odometry) |
+| `/diff_drive_controller/odom` | `nav_msgs/Odometry`, wheel odometry (no TF; input to the EKF) |
+| `/odometry/filtered` | `nav_msgs/Odometry`, EKF estimate (wheels + IMU), 50 Hz |
 | `/joint_states` | `sensor_msgs/JointState`, exact wheel angles and speeds, 50 Hz |
 | `/wheel_encoders` | `sensor_msgs/JointState`, quantized encoder readings, 50 Hz. Details: [docs/sensors/wheel_encoders.md](docs/sensors/wheel_encoders.md) |
 | `/imu` | `sensor_msgs/Imu`, frame `imu_link`, 100 Hz. Details: [docs/sensors/imu.md](docs/sensors/imu.md) |
-| `/tf`, `/tf_static` | `odom → base_footprint → base_link → wheels, camera, imu_link` |
+| `/tf`, `/tf_static` | `odom → base_footprint` (from the EKF) `→ base_link → wheels, camera, imu_link` |
 | `/clock` | simulation time |
 
 ## Troubleshooting
