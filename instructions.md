@@ -76,6 +76,9 @@ Pass any of these as `name:=value`. Distances in meters, angles in radians.
 | `imu_rpy` | `"0 0 0"` | IMU roll, pitch, yaw in `base_link` |
 | `imu_gyro_bias` | `0.017453` | Gyro bias per axis (rad/s), BNO085 raw typical 1 °/s. `0` = calibrated |
 | `imu_accel_bias` | `0.784532` | Accel bias per axis (m/s²), BNO085 raw typical 80 mg. `0` = calibrated |
+| `wheel_encoders` | `true` | Publish quantized, noisy encoder readings on `/wheel_encoders` |
+| `encoder_ticks_per_rev` | `1024` | Encoder ticks per wheel revolution (placeholder until hardware is chosen) |
+| `encoder_tick_noise` | `0.25` | Encoder edge jitter, stddev in ticks |
 | `render_engine` | `ogre` | `ogre` works in VMs. `ogre2` is needed for camera noise (ogre ignores it) |
 | `rviz` | `false` | `true` also opens RViz with the saved configuration (see section 5) |
 | `paused` | `false` | `true` starts Gazebo paused; the controllers then activate only after you press Play |
@@ -199,7 +202,8 @@ If you change the view and want to keep it, use **File → Save Config As** and 
 |---|---|
 | `/diff_drive_controller/cmd_vel` | `geometry_msgs/TwistStamped` (input) |
 | `/diff_drive_controller/odom` | `nav_msgs/Odometry` (wheel odometry) |
-| `/joint_states` | `sensor_msgs/JointState` (wheel encoders) |
+| `/joint_states` | `sensor_msgs/JointState`, exact wheel angles and speeds, 50 Hz |
+| `/wheel_encoders` | `sensor_msgs/JointState`, quantized encoder readings, 50 Hz. Details: [docs/sensors/wheel_encoders.md](docs/sensors/wheel_encoders.md) |
 | `/imu` | `sensor_msgs/Imu`, frame `imu_link`, 100 Hz. Details: [docs/sensors/imu.md](docs/sensors/imu.md) |
 | `/tf`, `/tf_static` | `odom → base_link → wheels, camera frames` |
 | `/clock` | simulation time |
