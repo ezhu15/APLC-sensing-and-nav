@@ -191,7 +191,8 @@ def analyze_run(case, rel, duration):
     for k in ('wheel', 'ekf'):
         e = np.column_stack([t] + [np.interp(t, rel[k][:, 0], rel[k][:, i]) for i in (1, 2, 3)])
         pos_err = np.hypot(e[:, 1] - truth[:, 1], e[:, 2] - truth[:, 2])
-        yaw_err = np.degrees(np.arctan2(np.sin(e[:, 3] - truth[:, 3]), np.cos(e[:, 3] - truth[:, 3])))
+        # Both headings are unwrapped, so this is the accumulated error (it can exceed 180 deg).
+        yaw_err = np.degrees(e[:, 3] - truth[:, 3])
         res['est'][k] = e
         res['metrics'][k] = {
             'final_pos': float(pos_err[-1]), 'rms_pos': float(np.sqrt(np.mean(pos_err ** 2))),
