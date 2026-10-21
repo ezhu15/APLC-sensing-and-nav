@@ -281,6 +281,14 @@ verify it, and known gaps between simulation and hardware.
 | RGB-D camera | Intel RealSense D435 | `/camera/camera/...` | [instructions.md](instructions.md) |
 | Wheel encoders | — | `/joint_states`, `/wheel_encoders`, `/diff_drive_controller/odom` | [docs/sensors/wheel_encoders.md](docs/sensors/wheel_encoders.md) |
 
+## Localization
+
+An EKF (`robot_localization`, package `aplc_localization`) fuses wheel odometry and the
+IMU into `/odometry/filtered` and the `odom → base_footprint` transform. It starts with
+`ros2 launch aplc_gazebo world.launch.py`. Frames, fused inputs, covariances, the
+evaluation tool and results against Gazebo ground truth:
+[docs/localization/ekf.md](docs/localization/ekf.md).
+
 ## Project status
 
 **Early development — simulation-first.** Features described above are goals, not necessarily implemented functionality.
