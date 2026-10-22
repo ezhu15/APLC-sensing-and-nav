@@ -208,7 +208,9 @@ bash scripts/docker-gazebo.sh
 The host setup writes your UID/GID to the local `.env`. Docker configuration
 lives in `docker/`; the scripts load `.env` and select the Compose files.
 The separate Gazebo container shares the workspace at `/ws` and starts
-`aplc_gazebo/world.launch.py` with `house_1.sdf`. Select the other world with:
+`aplc_gazebo/world.launch.py` with `house_1.sdf`, RViz, and Gazebo's **Drive APLC**
+teleop panel. It refreshes `aplc_gazebo` before launch so GUI assets and helper
+scripts are installed after branch updates. Select the other world with:
 
 ```bash
 APLC_WORLD=house_ramp.sdf bash scripts/docker-gazebo.sh
@@ -218,7 +220,11 @@ You can also set `APLC_WORLD` in `.env`. The GUI launcher automatically selects
 NVIDIA, Intel/AMD Mesa, or software rendering. NVIDIA requires the host driver
 and NVIDIA Container Toolkit configured for Docker. Override detection with
 `--renderer nvidia`, `--renderer mesa`, or `--renderer software`.
-GUI access uses X11/XWayland on the local Linux desktop.
+GUI access uses X11/XWayland on the local Linux desktop. In the Gazebo
+**Drive APLC** panel, select its **Keyboard** tab and focus Gazebo to drive with
+W/S (forward/backward) and A/D (turn); release the keys to stop. RViz shows the
+camera image and depth cloud. Disable RViz with `rviz:=false` when launching
+manually if you do not need it.
 
 For an interactive simulation shell:
 
@@ -238,17 +244,12 @@ build concurrently. To stop this project's containers, including one-off runs:
 bash scripts/docker-dev.sh down --remove-orphans
 ```
 
-The world launch also starts the robot description publisher and spawns the
-base APLC model (without cargo) at world coordinates `(5, -3, 0.05)` meters
-with zero roll, pitch, and yaw. Gazebo starts paused; wait for the robot to
-appear before pressing Play. Gravity then lets it settle onto the driveway,
-so its height will change from the initial spawn value.
-
-Do not launch a second description publisher alongside this world launch.
-The preview joint-state publisher is disabled and simulation time is enabled.
-ROS clock/joint-state bridges and drive control are not included yet; spawning
-does not require those bridges. Both worlds reference an SUV model on Gazebo
-Fuel; the first load needs network access to download it.
+The world launch starts Gazebo running, publishes the robot description, starts
+the EKF and sensor bridges, and spawns the base APLC model (without cargo) at
+`(5, -3, 0.05)` meters. It also activates the drive controllers. Do not launch a
+second description publisher alongside it. Gravity lets the robot settle onto
+the driveway after spawning. Both worlds reference an SUV model on Gazebo Fuel;
+the first load needs network access to download it.
 
 ## Development roadmap
 
