@@ -8,13 +8,15 @@ map -> odom and reads the robot's motion from the EKF's odom -> base_footprint.
 Ground truth is never an input to RTAB-Map or the EKF; map_alignment reads it only to
 record how the map frame sits in Gazebo's world, for evaluation.
 
-The database is wiped at the start of every run.
+The database is wiped at the start of every run. map_alignment.yaml is written next to
+it (same folder), so a database and its alignment always travel together. Both are
+gitignored: each person runs their own mapping drive.
 """
 
 import os
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
@@ -22,16 +24,26 @@ from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
 # With colcon build --symlink-install this file is a symlink into src/aplc_bringup, so
-# the database and the alignment file land in the source tree (maps/ is gitignored).
+# the database and its alignment file land in the source tree (gitignored).
 PKG_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 DEFAULT_DB = os.path.join(PKG_DIR, 'maps', 'rtabmap.db')
-ALIGNMENT_FILE = os.path.join(PKG_DIR, 'config', 'map_alignment.yaml')
+ALIGNMENT_NAME = 'map_alignment.yaml'   # written in the database's folder
 
 CAMERA = '/camera/camera/'
 
 
+def map_alignment(context):
+    """Gazebo world -> map transform at mapping start, saved next to the database
+    (evaluation only)."""
+    db = os.path.abspath(os.path.expanduser(LaunchConfiguration('database_path').perform(context)))
+    os.makedirs(os.path.dirname(db), exist_ok=True)
+    return [Node(
+        package='aplc_bringup', executable='map_alignment', name='map_alignment', output='screen',
+        parameters=[{'output': os.path.join(os.path.dirname(db), ALIGNMENT_NAME)}],
+    )]
+
+
 def generate_launch_description():
-    os.makedirs(os.path.dirname(DEFAULT_DB), exist_ok=True)
     use_sim_time = {'use_sim_time': True}
     rtabmap_config = PathJoinSubstitution([FindPackageShare('aplc_bringup'), 'config', 'rtabmap.yaml'])
     return LaunchDescription([
@@ -92,12 +104,7 @@ def generate_launch_description():
             arguments=['--delete_db_on_start'],
         ),
 
-        # Gazebo world -> map transform at mapping start, for comparing ground truth with
-        # the estimate later (evaluation only).
-        Node(
-            package='aplc_bringup', executable='map_alignment', name='map_alignment', output='screen',
-            parameters=[{'output': ALIGNMENT_FILE}],
-        ),
+        OpaqueFunction(function=map_alignment),
 
         Node(
             package='rviz2', executable='rviz2', name='rviz2', output='screen',
