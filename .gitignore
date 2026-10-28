@@ -13,6 +13,7 @@ __pycache__/
 # EKF evaluation rosbags (ros2 run aplc_localization ekf_eval)
 eval_bags/
 
-# RTAB-Map database and its map alignment, from each person's own mapping drive (aplc_bringup)
+# RTAB-Map database, map alignment and exported grid, from each person's own mapping drive (aplc_bringup)
 src/aplc_bringup/maps/*.db
 src/aplc_bringup/maps/map_alignment.yaml
+src/aplc_bringup/maps/aplc_map.*

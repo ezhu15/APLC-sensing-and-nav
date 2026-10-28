@@ -53,10 +53,13 @@ def generate_launch_description():
                               description="Open RTAB-Map's own viewer (features, loop closures)."),
         DeclareLaunchArgument('database_path', default_value=DEFAULT_DB,
                               description='RTAB-Map database to create (wiped at start).'),
+        # Mapping assumes the gyro bias was removed by a startup calibration (an open
+        # item for hardware). With a 0.1 deg/s bias the EKF heading drifted ~25 deg by the
+        # time the robot reached the door, and the house came out rotated in the map.
         DeclareLaunchArgument(
-            'imu_gyro_bias', default_value='0.0017453',
-            description='Simulated gyro bias (rad/s). Default 0.1 deg/s, the assumed residual after the '
-                        "BNO085's onboard calibration (docs/localization/ekf.md).",
+            'imu_gyro_bias', default_value='0.0',
+            description='Simulated gyro bias (rad/s). Default 0: assumes startup gyro calibration. '
+                        'Biased gyros make the EKF heading drift and distort the map.',
         ),
         DeclareLaunchArgument('seed', default_value='', description='Gazebo random seed (empty = random).'),
 
