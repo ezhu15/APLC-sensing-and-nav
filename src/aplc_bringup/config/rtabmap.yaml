@@ -42,9 +42,15 @@ rtabmap:
     # depth noise in the normals; walls, steps and furniture sides are obstacles.
     Grid/NormalsSegmentation: "true"
     Grid/MaxGroundAngle: "15"
-    # Flat surfaces only count as ground up to 0.5 m above the robot's floor. The ramp
-    # and landing rise 0.45 m (ground); counters (0.92 m) and tables (0.76 m) are flat
-    # too and must be obstacles.
+    # Flat surfaces count as ground only up to 0.5 m above the robot's own floor. Heights
+    # are in frame_id (base_footprint) for each map node; with 3-DoF poses (Force3DoF and
+    # the EKF's two_d_mode) every node sits at z = 0, so this is also the height in the map.
+    # Must clear the ramp: from its foot, the ramp surface within Grid/RangeMax (4 m)
+    # rises at most 4/12 = 0.33 m above the robot. The camera is 0.236 m high, so it only
+    # sees the tops of surfaces lower than that; higher furniture shows only its vertical
+    # sides, which are obstacles by Grid/MaxGroundAngle. Stair risers and the landing's
+    # side faces are vertical too. Known limit: the first stair tread (0.18 m) is low and
+    # flat, so it counts as ground at any value that keeps the ramp ground.
     Grid/MaxGroundHeight: "0.5"
     # Ignore points above 2.0 m (ceilings are 2.7 m); the robot never reaches them.
     Grid/MaxObstacleHeight: "2.0"
