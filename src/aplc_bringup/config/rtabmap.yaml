@@ -11,6 +11,10 @@ rtabmap:
     Reg/Force3DoF: "true"
     # Visual registration (feature matching on the RGB-D images). There is no lidar.
     Reg/Strategy: "0"
+    # Correct each odometry step between consecutive map nodes with visual registration,
+    # so small heading drift from the EKF doesn't pile up between loop closures. Where a
+    # frame has too few features (plain walls), the odometry step is kept as is.
+    RGBD/NeighborLinkRefining: "true"
     # Features needed to accept a match between two frames (default). Lower accepts more
     # matches on plain walls but risks wrong ones.
     Vis/MinInliers: "20"
@@ -23,6 +27,9 @@ rtabmap:
     # the robot stands still.
     RGBD/LinearUpdate: "0.1"
     RGBD/AngularUpdate: "0.1"
+    # Don't store frames that were not added to the map (e.g. one per second while the
+    # robot is parked). The default keeps them, which made a 10-minute map ~500 MB.
+    Mem/NotLinkedNodesKept: "false"
 
     # --- 2D occupancy grid (for RViz now, Nav2 later) -----------------------------------
     # Build the grid from the depth image. (Older RTAB-Map versions called this
