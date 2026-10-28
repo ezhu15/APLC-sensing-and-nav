@@ -16,7 +16,7 @@ gitignored: each person runs their own mapping drive.
 import os
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction
+from launch.actions import DeclareLaunchArgument, GroupAction, IncludeLaunchDescription, OpaqueFunction
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
@@ -62,7 +62,9 @@ def generate_launch_description():
 
         # Simulation + robot + controllers + EKF (odom -> base_footprint). Spawns at the
         # default driveway start point. Its own RViz is replaced by the mapping view.
-        IncludeLaunchDescription(
+        # Scoped: arguments passed to an included launch file otherwise leak back into
+        # this one (rviz:=false here would also switch off the mapping RViz below).
+        GroupAction(scoped=True, actions=[IncludeLaunchDescription(
             PythonLaunchDescriptionSource(PathJoinSubstitution([
                 FindPackageShare('aplc_gazebo'), 'launch', 'world.launch.py'])),
             launch_arguments={
@@ -71,7 +73,7 @@ def generate_launch_description():
                 'imu_gyro_bias': LaunchConfiguration('imu_gyro_bias'),
                 'seed': LaunchConfiguration('seed'),
             }.items(),
-        ),
+        )]),
 
         # Bundle color, depth and camera_info into one RGBDImage. The simulated camera
         # stamps all three identically, so exact sync works.
