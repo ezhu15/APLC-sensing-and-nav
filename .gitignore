@@ -12,3 +12,6 @@ __pycache__/
 
 # EKF evaluation rosbags (ros2 run aplc_localization ekf_eval)
 eval_bags/
+
+# RTAB-Map databases (aplc_bringup mapping runs)
+src/aplc_bringup/maps/*.db

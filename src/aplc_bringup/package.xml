@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>aplc_bringup</name>
+  <version>0.0.1</version>
+  <description>Top-level launch for the APLC: RTAB-Map mapping and localization on top of the simulation and EKF, error monitoring against ground truth, and the demo</description>
+  <maintainer email="shilpitha.t03@gmail.com">APLC Team</maintainer>
+  <license>TODO</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <!-- RTAB-Map: rtabmap node (SLAM / localization) and rgbd_sync -->
+  <exec_depend>rtabmap_slam</exec_depend>
+  <exec_depend>rtabmap_sync</exec_depend>
+  <!-- RViz displays for RTAB-Map's map cloud and graph -->
+  <exec_depend>rtabmap_rviz_plugins</exec_depend>
+  <exec_depend>rviz2</exec_depend>
+  <exec_depend>rviz_default_plugins</exec_depend>
+  <!-- Simulation, robot description and EKF -->
+  <exec_depend>aplc_description</exec_depend>
+  <exec_depend>aplc_gazebo</exec_depend>
+  <exec_depend>aplc_localization</exec_depend>
+  <export><build_type>ament_cmake</build_type></export>
+</package>
