@@ -17,3 +17,5 @@ eval_bags/
 src/aplc_bringup/maps/*.db
 src/aplc_bringup/maps/map_alignment.yaml
 src/aplc_bringup/maps/aplc_map.*
+# Localization error CSVs (aplc_bringup localization_monitor)
+src/aplc_bringup/logs/

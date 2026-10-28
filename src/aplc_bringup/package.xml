@@ -19,6 +19,10 @@
   <exec_depend>tf2_ros</exec_depend>
   <exec_depend>nav_msgs</exec_depend>
   <exec_depend>python3-yaml</exec_depend>
+  <!-- localization_monitor -->
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>rtabmap_msgs</exec_depend>
   <!-- map_saver_cli for exporting the 2D grid -->
   <exec_depend>nav2_map_server</exec_depend>
   <exec_depend>rviz2</exec_depend>
