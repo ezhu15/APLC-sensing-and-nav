@@ -1,0 +1,50 @@
+# RTAB-Map parameters shared by mapping and localization (#25).
+# ROS-side settings (frames, topics, database) are set in the launch files. Values for
+# RTAB-Map's own parameters (names with a "/") must be strings.
+# See docs/localization/rtabmap.md for the reasoning behind each choice.
+rtabmap:
+  ros__parameters:
+    # --- Registration -------------------------------------------------------------------
+    # The APLC drives on the floor: estimate only x, y and yaw between frames and in the
+    # map. Matches the EKF's two_d_mode; z, roll and pitch from noisy visual matches would
+    # only add error.
+    Reg/Force3DoF: "true"
+    # Visual registration (feature matching on the RGB-D images). There is no lidar.
+    Reg/Strategy: "0"
+    # Features needed to accept a match between two frames (default). Lower accepts more
+    # matches on plain walls but risks wrong ones.
+    Vis/MinInliers: "20"
+
+    # --- Map update ---------------------------------------------------------------------
+    # Process at most 1 frame per second for loop closure / localization (default). The
+    # EKF provides smooth motion in between.
+    Rtabmap/DetectionRate: "1"
+    # Add a map node after 0.1 m or 0.1 rad of motion (defaults); nothing is added while
+    # the robot stands still.
+    RGBD/LinearUpdate: "0.1"
+    RGBD/AngularUpdate: "0.1"
+
+    # --- 2D occupancy grid (for RViz now, Nav2 later) -----------------------------------
+    # Build the grid from the depth image. (Older RTAB-Map versions called this
+    # Grid/FromDepth; 0.23 uses Grid/Sensor: 0 = laser, 1 = depth, 2 = both.)
+    Grid/Sensor: "1"
+    # A flat 2D grid (projected on the floor plane), which is what Nav2 uses.
+    Grid/3D: "false"
+    # 5 cm cells (default).
+    Grid/CellSize: "0.05"
+    # The D435's depth error grows with the square of distance (about 2 % at 2 m); beyond
+    # ~4 m it is too noisy to mark obstacles reliably. Ignore points closer than the
+    # camera's 0.2 m minimum range.
+    Grid/RangeMax: "4.0"
+    Grid/RangeMin: "0.2"
+    # Ground vs obstacle by surface normal: points whose normal is within 15 deg of
+    # vertical are ground. The 1:12 ramp is 4.76 deg, so it stays ground with margin for
+    # depth noise in the normals; walls, steps and furniture sides are obstacles.
+    Grid/NormalsSegmentation: "true"
+    Grid/MaxGroundAngle: "15"
+    # Flat surfaces only count as ground up to 0.5 m above the robot's floor. The ramp
+    # and landing rise 0.45 m (ground); counters (0.92 m) and tables (0.76 m) are flat
+    # too and must be obstacles.
+    Grid/MaxGroundHeight: "0.5"
+    # Ignore points above 2.0 m (ceilings are 2.7 m); the robot never reaches them.
+    Grid/MaxObstacleHeight: "2.0"
