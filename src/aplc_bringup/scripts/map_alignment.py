@@ -1,0 +1,126 @@
+#!/usr/bin/env python3
+"""Record the transform from Gazebo's world to RTAB-Map's map frame at mapping start.
+
+RTAB-Map's map frame starts wherever the robot is when mapping begins; Gazebo ground
+truth (/ground_truth/odom) is in the world frame. To compare them later, this node pairs
+each ground-truth pose with the TF pose map -> base_footprint at the same timestamp,
+averages a few pairs while the robot is at rest, and computes
+
+    T_world_map = T_world_base (ground truth) * inverse(T_map_base) (TF)
+
+in 2D (x, y, yaw), matching RTAB-Map's Reg/Force3DoF. It writes the result to the
+output YAML file and exits.
+
+Ground truth is read here only to align frames for evaluation. It is never sent to
+RTAB-Map or the EKF.
+"""
+
+import math
+import os
+
+import rclpy
+import yaml
+from nav_msgs.msg import Odometry
+from rclpy.duration import Duration
+from rclpy.node import Node
+from rclpy.parameter import Parameter
+from rclpy.time import Time
+from tf2_ros import Buffer, TransformListener
+
+
+def yaw_of(q):
+    return math.atan2(2 * (q.w * q.z + q.x * q.y), 1 - 2 * (q.y * q.y + q.z * q.z))
+
+
+class MapAlignment(Node):
+
+    def __init__(self):
+        super().__init__('map_alignment', parameter_overrides=[
+            Parameter('use_sim_time', Parameter.Type.BOOL, True)])
+        self.output = self.declare_parameter('output', 'map_alignment.yaml').value
+        self.samples_needed = self.declare_parameter('samples', 20).value
+        self.max_speed = self.declare_parameter('max_speed', 0.01).value   # m/s, "at rest"
+        self.map_frame = self.declare_parameter('map_frame', 'map').value
+        self.base_frame = self.declare_parameter('base_frame', 'base_footprint').value
+        self.tf = Buffer()
+        self.listener = TransformListener(self.tf, self)
+        self.samples = []
+        self.done = False
+        self.create_subscription(Odometry, '/ground_truth/odom', self.on_truth, 10)
+        self.get_logger().info(f'waiting for {self.map_frame} -> {self.base_frame} and /ground_truth/odom')
+
+    def on_truth(self, msg):
+        if self.done:
+            return
+        tw = msg.twist.twist
+        if math.hypot(tw.linear.x, tw.linear.y) > self.max_speed or abs(tw.angular.z) > 0.01:
+            if self.samples:
+                self.get_logger().warn('robot moved before the alignment was recorded; restarting')
+                self.samples.clear()
+            return
+        stamp = Time.from_msg(msg.header.stamp)
+        try:
+            t = self.tf.lookup_transform(self.map_frame, self.base_frame, stamp, timeout=Duration(seconds=0.0))
+        except Exception:
+            return   # map frame not published yet, or no transform at this exact time
+        p, q = msg.pose.pose.position, msg.pose.pose.orientation
+        m = t.transform
+        self.samples.append(((p.x, p.y, p.z, yaw_of(q)),
+                             (m.translation.x, m.translation.y, yaw_of(m.rotation)),
+                             stamp.nanoseconds * 1e-9))
+        if len(self.samples) >= self.samples_needed:
+            self.finish()
+
+    def finish(self):
+        n = len(self.samples)
+        # Average the angles through their sines and cosines.
+        wx = sum(s[0][0] for s in self.samples) / n
+        wy = sum(s[0][1] for s in self.samples) / n
+        wz = sum(s[0][2] for s in self.samples) / n
+        wyaw = math.atan2(sum(math.sin(s[0][3]) for s in self.samples), sum(math.cos(s[0][3]) for s in self.samples))
+        mx = sum(s[1][0] for s in self.samples) / n
+        my = sum(s[1][1] for s in self.samples) / n
+        myaw = math.atan2(sum(math.sin(s[1][2]) for s in self.samples), sum(math.cos(s[1][2]) for s in self.samples))
+        # T_world_map = T_world_base * inv(T_map_base)
+        yaw = math.atan2(math.sin(wyaw - myaw), math.cos(wyaw - myaw))
+        c, s = math.cos(yaw), math.sin(yaw)
+        x = wx - (c * mx - s * my)
+        y = wy - (s * mx + c * my)
+        out = {
+            'world_frame': 'ground_truth_world',
+            'map_frame': self.map_frame,
+            'x': round(x, 6), 'y': round(y, 6), 'yaw': round(yaw, 6),
+            'yaw_deg': round(math.degrees(yaw), 4),
+            'robot_ground_truth_at_start': {'x': round(wx, 6), 'y': round(wy, 6), 'z': round(wz, 6),
+                                            'yaw': round(wyaw, 6)},
+            'robot_in_map_at_start': {'x': round(mx, 6), 'y': round(my, 6), 'yaw': round(myaw, 6)},
+            'samples': n,
+            'sim_time': round(self.samples[-1][2], 3),
+        }
+        os.makedirs(os.path.dirname(os.path.abspath(self.output)), exist_ok=True)
+        with open(self.output, 'w') as f:
+            f.write('# Transform from Gazebo world (ground truth) to the RTAB-Map map frame, recorded\n'
+                    '# at the start of the mapping run that built the current database. A point in the\n'
+                    '# map frame maps to the world as: world = R(yaw) * map + (x, y). 2D, like the map.\n'
+                    '# Regenerated by every mapping run (aplc_bringup mapping.launch.py).\n')
+            yaml.safe_dump({'map_alignment': out}, f, sort_keys=False)
+        self.get_logger().info(f'wrote {self.output}: x {x:.4f} y {y:.4f} yaw {math.degrees(yaw):.3f} deg '
+                               f'({n} samples at rest)')
+        self.done = True
+
+
+def main():
+    rclpy.init()
+    node = MapAlignment()
+    try:
+        while rclpy.ok() and not node.done:
+            rclpy.spin_once(node, timeout_sec=0.1)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.try_shutdown()
+
+
+if __name__ == '__main__':
+    main()
