@@ -1,0 +1,5 @@
+<library path="quest_pov_view">
+  <class name="aplc_scene_ros/QuestPOV" type="aplc_scene_ros::QuestPOV" base_class_type="rviz_common::ViewController">
+    <description>Headset POV following the complete target-frame pose, with zero camera offset.</description>
+  </class>
+</library>

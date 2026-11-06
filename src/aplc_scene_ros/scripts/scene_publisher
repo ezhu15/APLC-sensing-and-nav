@@ -1,0 +1,3 @@
+#!/usr/bin/env python3
+from aplc_scene_ros.publisher import main
+if __name__ == '__main__': main()

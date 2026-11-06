@@ -284,3 +284,68 @@ Each issue GitHub issue should be directly attached to a branch labeled [issue #
 ## License
 
 To be determined.
+
+### External Quest room scenes
+
+The MetaXR project provides a companion launcher for its captured room exports:
+
+```bash
+bash '/home/van/Documents/Unreal Projects/APLC_Test/Plugins/MetaXR/Tools/Gazebo/docker/run.sh' --build
+```
+
+It builds/reuses this repository's `aplc-dev:jazzy` image and GUI/GPU launcher,
+then mounts the selected Quest export read-only and opens its `world.sdf`.
+No colcon build is required for this scene-only launch. The regular house-world
+and robot launcher keeps its existing behavior.
+
+The companion's `--validate` and `--headless` modes validate SDF or run 20
+physics iterations without a desktop. Use `--scene /path/to/export` for another
+capture, `--repo /path/to/this/checkout` for another checkout, and `--renderer
+software` to select software rendering.
+
+`scripts/docker-gazebo.sh` accepts the optional absolute path
+`APLC_GAZEBO_COMPOSE_OVERRIDE` for external scene-specific Compose settings.
+It applies this file after the base files and before GPU overrides. Leaving the
+variable unset preserves the existing default house/robot launch.
+
+## Portable scene conversion
+
+The [scene converter](tools/scene_converter/README.md) imports APLC Quest room
+snapshots into a portable meter-valued map and exports Gazebo SDF/OBJ geometry.
+It uses Python 3.10+ with no ROS, Unreal, or AI runtime dependency.
+
+```bash
+cd tools/scene_converter
+python3 -m aplc_scene validate ../../maps/quest_20261104.scene.json
+python3 -m aplc_scene gazebo ../../maps/quest_20261104.scene.json --output /tmp/aplc-building-gazebo
+```
+
+The included map contains 12 rooms and 142 anchors from the November 4 capture.
+See [validation](tools/scene_converter/VALIDATION.md) and [map notes](maps/README.md).
+
+## RViz captured scene
+
+The [scene publisher](src/aplc_scene_ros/README.md) displays the portable map,
+room labels and landmarks. Build it once, then launch using the existing Docker
+display and renderer setup:
+
+```bash
+bash scripts/docker-dev.sh run --rm dev bash -c 'source /opt/ros/jazzy/setup.bash; colcon build --symlink-install --packages-select aplc_scene_ros'
+bash scripts/docker-rviz.sh
+```
+
+Add `--live` to start the Quest pose/alignment bridge and enable both receiver ports.
+See [live Quest RViz instructions](docs/LiveQuest.md).
+
+## Quest USB / Wi-Fi transport
+
+USB remains available. Choose the receiver LAN IP without rebuilding the app:
+
+```bash
+python3 scripts/quest-network.py wifi --host YOUR_COMPUTER_LAN_IP --restart
+python3 scripts/quest-network.py usb --restart
+```
+
+For optional Docker receiver ports, use `bash scripts/docker-rviz.sh --quest-network`.
+See [network configuration and diagnostic receiver](docs/QuestNetworking.md).
+Use `bash scripts/docker-rviz.sh --live` for the live ROS bridge and RViz display.

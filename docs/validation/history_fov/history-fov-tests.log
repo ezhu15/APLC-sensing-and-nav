@@ -1,0 +1,28 @@
+Starting >>> aplc_scene_ros
+Finished <<< aplc_scene_ros [3.31s]
+
+Summary: 1 package finished [3.38s]
+test_concave_plane_preserves_area (test_geometry.GeometryTests.test_concave_plane_preserves_area) ... ok
+test_volume_and_empty_room (test_geometry.GeometryTests.test_volume_and_empty_room) ... ok
+test_bad_numeric_values (test_live_state.StateTests.test_bad_numeric_values) ... ok
+test_buffered_capture_detected (test_live_state.StateTests.test_buffered_capture_detected) ... ok
+test_old_first_alignment_after_fresh_pose (test_live_state.StateTests.test_old_first_alignment_after_fresh_pose) ... ok
+test_replay_and_new_session (test_live_state.StateTests.test_replay_and_new_session) ... ok
+test_stabilizing_and_mismatch_also_expire (test_live_state.StateTests.test_stabilizing_and_mismatch_also_expire) ... ok
+test_staleness_disconnect_and_invalid_alignment (test_live_state.StateTests.test_staleness_disconnect_and_invalid_alignment) ... ok
+test_transform_direction (test_live_state.StateTests.test_transform_direction) ... ok
+test_wrong_map_frame_peer (test_live_state.StateTests.test_wrong_map_frame_peer) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.001s
+
+OK
+[INFO] [1793826780.707651916] [quest_bridge]: Listening for pose on ('0.0.0.0', 15005)
+[INFO] [1793826780.708026188] [quest_bridge]: Listening for alignment on ('0.0.0.0', 15006)
+[INFO] [1793826780.728794404] [quest_bridge]: Quest status: waiting_alignment
+[INFO] [1793826781.729338208] [quest_bridge]: Quest status: live
+[INFO] [1793826783.288716944] [quest_bridge]: Quest status: pose_stale
+[INFO] [1793826783.648675790] [quest_bridge]: Quest status: map_or_frame_mismatch
+[INFO] [1793826785.648675196] [quest_bridge]: Quest status: alignment_stale
+PASS: 15 mapped poses, TF/trail, history retention on stale pose, map-ID rejection and invalid-status expiry
+[INFO] [1793826786.068817609] [quest_bridge]: Quest status: alignment_disconnected

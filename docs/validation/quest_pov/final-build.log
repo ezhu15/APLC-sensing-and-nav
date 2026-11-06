@@ -1,0 +1,41 @@
+Starting >>> aplc_scene_ros
+Finished <<< aplc_scene_ros [3.35s]
+
+Summary: 1 package finished [3.43s]
+Arguments (pass arguments as '<name>:=<value>'):
+
+    'map':
+        no description given
+        (default: '/ws/install/aplc_scene_ros/share/aplc_scene_ros/maps/quest_20261104.scene.json')
+
+    'rviz':
+        no description given
+        (default: 'true')
+
+    'live':
+        no description given
+        (default: 'false')
+
+    'pov':
+        no description given
+        (default: 'true')
+
+    'bind_address':
+        no description given
+        (default: '0.0.0.0')
+
+    'pose_port':
+        no description given
+        (default: '5005')
+
+    'alignment_port':
+        no description given
+        (default: '5006')
+
+    'show_ceilings':
+        no description given
+        (default: 'false')
+
+    'show_labels':
+        no description given
+        (default: 'true')

@@ -1,0 +1,45 @@
+test_concave_plane_preserves_area (test_geometry.GeometryTests.test_concave_plane_preserves_area) ... ok
+test_volume_and_empty_room (test_geometry.GeometryTests.test_volume_and_empty_room) ... ok
+test_bad_numeric_values (test_live_state.StateTests.test_bad_numeric_values) ... ok
+test_buffered_capture_detected (test_live_state.StateTests.test_buffered_capture_detected) ... ok
+test_old_first_alignment_after_fresh_pose (test_live_state.StateTests.test_old_first_alignment_after_fresh_pose) ... ok
+test_replay_and_new_session (test_live_state.StateTests.test_replay_and_new_session) ... ok
+test_stabilizing_and_mismatch_also_expire (test_live_state.StateTests.test_stabilizing_and_mismatch_also_expire) ... ok
+test_staleness_disconnect_and_invalid_alignment (test_live_state.StateTests.test_staleness_disconnect_and_invalid_alignment) ... ok
+test_transform_direction (test_live_state.StateTests.test_transform_direction) ... ok
+test_wrong_map_frame_peer (test_live_state.StateTests.test_wrong_map_frame_peer) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.001s
+
+OK
+[INFO] [1793830283.724051235] [quest_bridge]: Listening for pose on ('0.0.0.0', 16005)
+[INFO] [1793830283.724465701] [quest_bridge]: Listening for alignment on ('0.0.0.0', 16006)
+[INFO] [1793830283.744978116] [quest_bridge]: Accepted pose TCP client 127.0.0.1
+[INFO] [1793830283.745414872] [quest_bridge]: Quest status: waiting_alignment
+[INFO] [1793830283.785007247] [quest_bridge]: Accepted alignment TCP client 127.0.0.1
+[INFO] [1793830284.285471290] [quest_bridge]: Quest status: waiting_pose
+[INFO] [1793830284.405411320] [quest_bridge]: Quest status: live
+[INFO] [1793830284.885314238] [quest_bridge]: Quest status: pose_stale
+[INFO] [1793830285.285016568] [quest_bridge]: Closing inactive alignment TCP connection; allowing reconnect
+[INFO] [1793830285.285514507] [quest_bridge]: Quest status: alignment_disconnected
+[INFO] [1793830285.425015707] [quest_bridge]: Closing inactive pose TCP connection; allowing reconnect
+[INFO] [1793830285.905048522] [quest_bridge]: Accepted pose TCP client 127.0.0.1
+[INFO] [1793830285.905399396] [quest_bridge]: Accepted alignment TCP client 127.0.0.1
+[INFO] [1793830285.965356081] [quest_bridge]: Quest status: waiting_pose
+[INFO] [1793830286.025181441] [quest_bridge]: Quest status: live
+PASS: idle socket replacement, new session, reset sequence and reset device clock recovered without restarting bridge/RViz
+[INFO] [1793830286.225273242] [quest_bridge]: Quest status: alignment_disconnected
+[INFO] [1793830287.107217098] [quest_bridge]: Listening for pose on ('0.0.0.0', 15005)
+[INFO] [1793830287.107608003] [quest_bridge]: Listening for alignment on ('0.0.0.0', 15006)
+[INFO] [1793830287.128336307] [quest_bridge]: Quest status: waiting_alignment
+[INFO] [1793830287.188294683] [quest_bridge]: Accepted pose TCP client 127.0.0.1
+[INFO] [1793830287.188613225] [quest_bridge]: Accepted alignment TCP client 127.0.0.1
+[INFO] [1793830288.208453809] [quest_bridge]: Quest status: live
+[INFO] [1793830289.708336689] [quest_bridge]: Quest status: pose_stale
+[INFO] [1793830290.208524922] [quest_bridge]: Quest status: alignment_stale
+[INFO] [1793830290.288341370] [quest_bridge]: Quest status: live
+[INFO] [1793830290.628356617] [quest_bridge]: Quest status: map_or_frame_mismatch
+[INFO] [1793830292.628395010] [quest_bridge]: Quest status: alignment_stale
+PASS: 17 mapped poses, TF/trail, bounded segmented history, retained late delivery, map-ID rejection and invalid-status expiry
+[INFO] [1793830293.028417781] [quest_bridge]: Quest status: alignment_disconnected

@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>aplc_scene_ros</name>
+  <version>0.1.0</version>
+  <description>Portable room scene visualization for RViz</description>
+  <maintainer email="ezhu15@jh.edu">APLC Team</maintainer>
+  <license>TODO</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_python</buildtool_depend>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>visualization_msgs</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>rviz2</exec_depend>
+  <depend>rviz_common</depend>
+  <depend>rviz_default_plugins</depend>
+  <depend>pluginlib</depend>
+  <test_depend>tf2_msgs</test_depend>
+  <export><build_type>ament_cmake</build_type></export>
+</package>

@@ -1,0 +1,39 @@
+{
+  "seconds": 20.060692326000208,
+  "pose_count": 230,
+  "path_messages": 53,
+  "path_points": 0,
+  "statuses": [
+    "alignment_disconnected",
+    "live"
+  ],
+  "last_status": {
+    "status": "alignment_disconnected",
+    "map_id": "sha256:ca0192069752909f28cd81399cd453a23845e0509beb14cf057ca31ac2c711ee",
+    "session_id": "954449b0-f897-4795-866b-5e6ece41c482",
+    "received": {
+      "pose": 772,
+      "alignment": 40
+    },
+    "rejected": 0
+  },
+  "tf_children": [
+    "quest_headset",
+    "quest_world"
+  ],
+  "marker_messages": 238,
+  "rviz_subscribers": [
+    "rviz",
+    "quest_live_observer"
+  ],
+  "last_position_m": [
+    -1.0063498381533924,
+    -0.3640403705646329,
+    1.3823489067723838
+  ],
+  "axis_span_m": [
+    0.14829102639406322,
+    0.4032520403241878,
+    0.22411678002304192
+  ]
+}

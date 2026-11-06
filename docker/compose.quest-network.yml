@@ -1,0 +1,7 @@
+# Optional receiver ports, for USB forwarding and direct Wi-Fi TCP alike.
+# compose run requires --service-ports (set by docker-rviz.sh --quest-network).
+services:
+  gazebo:
+    ports:
+      - "${APLC_QUEST_BIND_IP:-0.0.0.0}:${APLC_QUEST_POSE_PORT:-5005}:5005/tcp"
+      - "${APLC_QUEST_BIND_IP:-0.0.0.0}:${APLC_QUEST_ALIGNMENT_PORT:-5006}:5006/tcp"

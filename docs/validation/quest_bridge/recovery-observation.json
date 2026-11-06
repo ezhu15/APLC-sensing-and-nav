@@ -1,0 +1,27 @@
+{
+  "seconds": 15.030319299999974,
+  "pose_count": 292,
+  "statuses": [
+    "live"
+  ],
+  "last_status": {
+    "status": "live",
+    "map_id": "sha256:ca0192069752909f28cd81399cd453a23845e0509beb14cf057ca31ac2c711ee",
+    "session_id": "954449b0-f897-4795-866b-5e6ece41c482",
+    "received": {
+      "pose": 1481,
+      "alignment": 77
+    },
+    "rejected": 0
+  },
+  "path_points": 712,
+  "tf_children": [
+    "quest_headset",
+    "quest_world"
+  ],
+  "axis_span_m": [
+    0.1312037355722705,
+    0.5704104589067465,
+    0.15208304964235753
+  ]
+}

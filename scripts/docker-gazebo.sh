@@ -30,6 +30,14 @@ if [[ -z "${DISPLAY:-}" ]]; then
 fi
 
 compose_args=(--env-file "$repo_dir/.env" -f docker/compose.yml -f docker/compose.gazebo.yml)
+# Optional scene-specific Compose settings; applied before renderer overrides.
+if [[ -n "${APLC_GAZEBO_COMPOSE_OVERRIDE:-}" ]]; then
+  if [[ ! -f "$APLC_GAZEBO_COMPOSE_OVERRIDE" ]]; then
+    echo "Missing Compose override: $APLC_GAZEBO_COMPOSE_OVERRIDE" >&2
+    exit 1
+  fi
+  compose_args+=(-f "$APLC_GAZEBO_COMPOSE_OVERRIDE")
+fi
 # shellcheck source=scripts/docker-gpu-detect.sh
 source "$repo_dir/scripts/docker-gpu-detect.sh"
 if [[ "$renderer" != software ]]; then
@@ -71,4 +79,8 @@ if [[ ! -s "$GAZEBO_XAUTHORITY" ]]; then
 fi
 
 # Extra arguments replace the default Gazebo command, e.g. 'bash'.
-docker compose "${compose_args[@]}" run --rm gazebo "$@"
+run_args=(--rm)
+if [[ "${APLC_DOCKER_SERVICE_PORTS:-false}" == true ]]; then
+  run_args+=(--service-ports)
+fi
+docker compose "${compose_args[@]}" run "${run_args[@]}" gazebo "$@"

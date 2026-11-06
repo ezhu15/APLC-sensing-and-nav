@@ -18,6 +18,9 @@ COPY src/aplc_description/package.xml \
 COPY src/aplc_gazebo/package.xml \
     /tmp/dependencies/aplc_gazebo/package.xml
 
+COPY src/aplc_scene_ros/package.xml \
+    /tmp/dependencies/aplc_scene_ros/package.xml
+
 RUN source /opt/ros/jazzy/setup.bash \
     && rosdep update \
     && apt-get update \

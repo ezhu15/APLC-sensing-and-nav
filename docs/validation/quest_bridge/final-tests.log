@@ -1,0 +1,22 @@
+test_concave_plane_preserves_area (test_geometry.GeometryTests.test_concave_plane_preserves_area) ... ok
+test_volume_and_empty_room (test_geometry.GeometryTests.test_volume_and_empty_room) ... ok
+test_bad_numeric_values (test_live_state.StateTests.test_bad_numeric_values) ... ok
+test_buffered_capture_detected (test_live_state.StateTests.test_buffered_capture_detected) ... ok
+test_old_first_alignment_after_fresh_pose (test_live_state.StateTests.test_old_first_alignment_after_fresh_pose) ... ok
+test_replay_and_new_session (test_live_state.StateTests.test_replay_and_new_session) ... ok
+test_staleness_disconnect_and_invalid_alignment (test_live_state.StateTests.test_staleness_disconnect_and_invalid_alignment) ... ok
+test_transform_direction (test_live_state.StateTests.test_transform_direction) ... ok
+test_wrong_map_frame_peer (test_live_state.StateTests.test_wrong_map_frame_peer) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.001s
+
+OK
+[INFO] [1793819840.119976599] [quest_bridge]: Listening for pose on ('0.0.0.0', 15005)
+[INFO] [1793819840.120358216] [quest_bridge]: Listening for alignment on ('0.0.0.0', 15006)
+[INFO] [1793819840.140976126] [quest_bridge]: Quest status: waiting_alignment
+[INFO] [1793819841.241193444] [quest_bridge]: Quest status: live
+[INFO] [1793819842.781040372] [quest_bridge]: Quest status: pose_stale
+[INFO] [1793819843.141115878] [quest_bridge]: Quest status: map_or_frame_mismatch
+PASS: 15 mapped poses, TF/trail, stale clearing and map-ID rejection
+[INFO] [1793819843.461261990] [quest_bridge]: Quest status: alignment_disconnected
