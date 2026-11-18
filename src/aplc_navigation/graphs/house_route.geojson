@@ -1,0 +1,702 @@
+{
+ "type": "FeatureCollection",
+ "name": "aplc_house_route",
+ "crs": {
+  "type": "name",
+  "properties": {
+   "name": "urn:ogc:def:crs:EPSG::3857"
+  }
+ },
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "id": 0,
+    "frame": "map",
+    "metadata": {
+     "name": "inside"
+    }
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -1.5,
+     3.5
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": 1,
+    "frame": "map",
+    "metadata": {
+     "name": "landing"
+    }
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.7,
+     3.5
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": 2,
+    "frame": "map",
+    "metadata": {
+     "name": "ramp_top"
+    }
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.6,
+     2.4
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": 3,
+    "frame": "map",
+    "metadata": {
+     "name": "ramp_bottom"
+    }
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.6,
+     -3.1
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": 4,
+    "frame": "map",
+    "metadata": {
+     "name": "apron"
+    }
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     1.6,
+     -3.4
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": 5,
+    "frame": "map",
+    "metadata": {
+     "name": "lane_a_start"
+    }
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.8,
+     -2.6
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": 6,
+    "frame": "map",
+    "metadata": {
+     "name": "lane_a_end"
+    }
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     5.0,
+     -2.6
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": 7,
+    "frame": "map",
+    "metadata": {
+     "name": "lane_b_start"
+    }
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.8,
+     -4.4
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": 8,
+    "frame": "map",
+    "metadata": {
+     "name": "lane_b_end"
+    }
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     5.0,
+     -4.4
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": 9,
+    "frame": "map",
+    "metadata": {
+     "name": "trunk"
+    }
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     6.0,
+     -3.4
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": 100,
+    "startid": 0,
+    "endid": 1,
+    "metadata": {
+     "name": "inside->landing"
+    }
+   },
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       -1.5,
+       3.5
+      ],
+      [
+       0.7,
+       3.5
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": 101,
+    "startid": 1,
+    "endid": 0,
+    "metadata": {
+     "name": "landing->inside"
+    }
+   },
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       0.7,
+       3.5
+      ],
+      [
+       -1.5,
+       3.5
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": 102,
+    "startid": 1,
+    "endid": 2,
+    "metadata": {
+     "name": "landing->ramp_top"
+    }
+   },
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       0.7,
+       3.5
+      ],
+      [
+       0.6,
+       2.4
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": 103,
+    "startid": 2,
+    "endid": 1,
+    "metadata": {
+     "name": "ramp_top->landing"
+    }
+   },
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       0.6,
+       2.4
+      ],
+      [
+       0.7,
+       3.5
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": 104,
+    "startid": 2,
+    "endid": 3,
+    "metadata": {
+     "name": "ramp_top->ramp_bottom"
+    }
+   },
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       0.6,
+       2.4
+      ],
+      [
+       0.6,
+       -3.1
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": 105,
+    "startid": 3,
+    "endid": 2,
+    "metadata": {
+     "name": "ramp_bottom->ramp_top"
+    }
+   },
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       0.6,
+       -3.1
+      ],
+      [
+       0.6,
+       2.4
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": 106,
+    "startid": 3,
+    "endid": 4,
+    "metadata": {
+     "name": "ramp_bottom->apron"
+    }
+   },
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       0.6,
+       -3.1
+      ],
+      [
+       1.6,
+       -3.4
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": 107,
+    "startid": 4,
+    "endid": 3,
+    "metadata": {
+     "name": "apron->ramp_bottom"
+    }
+   },
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       1.6,
+       -3.4
+      ],
+      [
+       0.6,
+       -3.1
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": 108,
+    "startid": 4,
+    "endid": 5,
+    "metadata": {
+     "name": "apron->lane_a_start"
+    }
+   },
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       1.6,
+       -3.4
+      ],
+      [
+       2.8,
+       -2.6
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": 109,
+    "startid": 5,
+    "endid": 4,
+    "metadata": {
+     "name": "lane_a_start->apron"
+    }
+   },
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       2.8,
+       -2.6
+      ],
+      [
+       1.6,
+       -3.4
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": 110,
+    "startid": 5,
+    "endid": 6,
+    "metadata": {
+     "name": "lane_a_start->lane_a_end"
+    }
+   },
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       2.8,
+       -2.6
+      ],
+      [
+       5.0,
+       -2.6
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": 111,
+    "startid": 6,
+    "endid": 5,
+    "metadata": {
+     "name": "lane_a_end->lane_a_start"
+    }
+   },
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       5.0,
+       -2.6
+      ],
+      [
+       2.8,
+       -2.6
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": 112,
+    "startid": 6,
+    "endid": 9,
+    "metadata": {
+     "name": "lane_a_end->trunk"
+    }
+   },
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       5.0,
+       -2.6
+      ],
+      [
+       6.0,
+       -3.4
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": 113,
+    "startid": 9,
+    "endid": 6,
+    "metadata": {
+     "name": "trunk->lane_a_end"
+    }
+   },
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       6.0,
+       -3.4
+      ],
+      [
+       5.0,
+       -2.6
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": 114,
+    "startid": 4,
+    "endid": 7,
+    "metadata": {
+     "name": "apron->lane_b_start"
+    }
+   },
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       1.6,
+       -3.4
+      ],
+      [
+       2.8,
+       -4.4
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": 115,
+    "startid": 7,
+    "endid": 4,
+    "metadata": {
+     "name": "lane_b_start->apron"
+    }
+   },
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       2.8,
+       -4.4
+      ],
+      [
+       1.6,
+       -3.4
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": 116,
+    "startid": 7,
+    "endid": 8,
+    "metadata": {
+     "name": "lane_b_start->lane_b_end"
+    }
+   },
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       2.8,
+       -4.4
+      ],
+      [
+       5.0,
+       -4.4
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": 117,
+    "startid": 8,
+    "endid": 7,
+    "metadata": {
+     "name": "lane_b_end->lane_b_start"
+    }
+   },
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       5.0,
+       -4.4
+      ],
+      [
+       2.8,
+       -4.4
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": 118,
+    "startid": 8,
+    "endid": 9,
+    "metadata": {
+     "name": "lane_b_end->trunk"
+    }
+   },
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       5.0,
+       -4.4
+      ],
+      [
+       6.0,
+       -3.4
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": 119,
+    "startid": 9,
+    "endid": 8,
+    "metadata": {
+     "name": "trunk->lane_b_end"
+    }
+   },
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       6.0,
+       -3.4
+      ],
+      [
+       5.0,
+       -4.4
+      ]
+     ]
+    ]
+   }
+  }
+ ]
+}

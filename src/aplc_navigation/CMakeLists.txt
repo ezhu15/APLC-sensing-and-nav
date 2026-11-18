@@ -1,0 +1,9 @@
+cmake_minimum_required(VERSION 3.8)
+project(aplc_navigation)
+find_package(ament_cmake REQUIRED)
+# Every folder the launch files read must be listed here.
+install(DIRECTORY config launch behavior_trees rviz graphs DESTINATION share/${PROJECT_NAME})
+install(PROGRAMS scripts/fake_quest.py DESTINATION lib/${PROJECT_NAME} RENAME fake_quest)
+install(PROGRAMS scripts/obstacles.py DESTINATION lib/${PROJECT_NAME} RENAME obstacles)
+install(PROGRAMS scripts/route_demo.py DESTINATION lib/${PROJECT_NAME} RENAME route_demo)
+ament_package()

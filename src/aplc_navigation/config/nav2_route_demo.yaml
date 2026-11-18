@@ -1,0 +1,362 @@
+# Nav2 for the APLC Route Server demo (launch/route_demo.launch.py).
+#
+# Pipeline: bt_navigator runs behavior_trees/navigate_on_route.xml:
+#   route_server (ComputeAndTrackRoute) turns the goal into a path along the route graph
+#   -> controller_server (MPPI) follows that path, free to leave it to avoid obstacles
+#   -> /diff_drive_controller/cmd_vel (TwistStamped).
+# When the controller cannot make progress (a lane is blocked), the tree waits, then asks
+# the Route Server for a new route; its CostmapScorer drops graph edges that the global
+# costmap marks as blocked, so the new route takes the other lane.
+#
+# Frames: map -> odom from the simulated Quest (fake_quest), odom -> base_footprint from
+# the EKF (aplc_localization). Obstacles come only from the headset-height depth camera.
+
+bt_navigator:
+  ros__parameters:
+    use_sim_time: true
+    global_frame: map
+    robot_base_frame: base_footprint
+    odom_topic: /odometry/filtered
+    bt_loop_duration: 10
+    default_server_timeout: 20
+    wait_for_service_timeout: 1000
+    action_server_result_timeout: 900.0
+    navigators: ["navigate_to_pose"]
+    navigate_to_pose:
+      plugin: "nav2_bt_navigator::NavigateToPoseNavigator"
+    # Set by the launch file to behavior_trees/navigate_on_route.xml.
+    # default_nav_to_pose_bt_xml: ...
+    error_code_names:
+      - compute_route_error_code
+      - follow_path_error_code
+
+route_server:
+  ros__parameters:
+    use_sim_time: true
+    # graph_filepath is set by the launch file (graphs/house_route.geojson).
+    route_frame: map
+    base_frame: base_footprint
+    # The graph is small (nodes 1-2.5 m apart): a node counts as reached within 0.5 m,
+    # or when the robot passes the line through the node perpendicular to the edge
+    # within boundary_radius_to_achieve_node.
+    radius_to_achieve_node: 0.5
+    boundary_radius_to_achieve_node: 1.0
+    tracker_update_rate: 10.0
+    # Round the corners of the dense path at the nodes.
+    smooth_corners: true
+    smoothing_radius: 0.5
+    path_density: 0.05
+    # Join the robot's start pose and the goal pose to the graph (not just node to node).
+    prune_goal: true
+    max_iterations: 0
+    costmap_topic: global_costmap/costmap_raw
+    # ReroutingService: ros2 service call /route_server/ReroutingService/reroute std_srvs/srv/Trigger
+    operations: ["ReroutingService"]
+    ReroutingService:
+      plugin: "nav2_route::ReroutingService"
+    # DistanceScorer: shortest route. CostmapScorer: an edge whose straight line crosses a
+    # cell at or above max_cost in the global costmap is invalid (blocked).
+    # DynamicEdgesScorer: close or reweight edges by service
+    #   (ros2 service call /route_server/DynamicEdgesScorer/adjust_edges nav2_msgs/srv/DynamicEdges ...).
+    edge_cost_functions: ["DistanceScorer", "CostmapScorer", "DynamicEdgesScorer"]
+    DistanceScorer:
+      plugin: "nav2_route::DistanceScorer"
+    CostmapScorer:
+      plugin: "nav2_route::CostmapScorer"
+      use_maximum: true
+      invalid_on_collision: true
+      invalid_off_map: false
+      max_cost: 253.0
+      weight: 1.0
+      check_resolution: 1
+    DynamicEdgesScorer:
+      plugin: "nav2_route::DynamicEdgesScorer"
+
+controller_server:
+  ros__parameters:
+    use_sim_time: true
+    # Publish geometry_msgs/TwistStamped, which diff_drive_controller (Jazzy) expects.
+    enable_stamped_cmd_vel: true
+    # MPPI needs model_dt >= the control period: 10 Hz with model_dt 0.1 halves the
+    # work of the Nav2 default (20 Hz, 0.05) for the same 3 s horizon.
+    controller_frequency: 10.0
+    costmap_update_timeout: 0.30
+    min_x_velocity_threshold: 0.001
+    min_y_velocity_threshold: 0.5
+    min_theta_velocity_threshold: 0.001
+    failure_tolerance: 0.5
+    progress_checker_plugins: ["progress_checker"]
+    goal_checker_plugins: ["general_goal_checker"]
+    controller_plugins: ["FollowPath"]
+    use_realtime_priority: false
+    # "Stuck" = moved less than 0.3 m in 8 s. That is what ends a blocked-lane attempt.
+    progress_checker:
+      plugin: "nav2_controller::SimpleProgressChecker"
+      required_movement_radius: 0.3
+      movement_time_allowance: 8.0
+    general_goal_checker:
+      stateful: true
+      plugin: "nav2_controller::SimpleGoalChecker"
+      xy_goal_tolerance: 0.25
+      yaw_goal_tolerance: 0.35
+    FollowPath:
+      # Model Predictive Path Integral controller: samples batch_size velocity sequences
+      # over time_steps * model_dt seconds, scores each with the critics below, and drives
+      # the weighted average. It follows the route path but is not bound to it: the cost
+      # critics push trajectories off the path around obstacles, the path critics pull
+      # them back.
+      plugin: "nav2_mppi_controller::MPPIController"
+      time_steps: 30
+      model_dt: 0.1
+      batch_size: 800           # 2000 is the Nav2 default; reduced for the 4-core VM
+      ax_max: 0.5               # diff_drive_controller linear.x.max_acceleration
+      ax_min: -0.5
+      ay_max: 0.0
+      ay_min: 0.0
+      az_max: 1.0               # angular.z.max_acceleration
+      vx_std: 0.2
+      vy_std: 0.0
+      wz_std: 0.4
+      vx_max: 0.4               # under the controller's 0.5 m/s limit
+      vx_min: -0.2
+      vy_max: 0.0
+      wz_max: 0.9               # under the controller's 1.0 rad/s limit
+      iteration_count: 1
+      prune_distance: 1.7
+      transform_tolerance: 0.2
+      temperature: 0.3
+      gamma: 0.015
+      motion_model: "DiffDrive"
+      visualize: true
+      regenerate_noises: true
+      TrajectoryVisualizer:
+        trajectory_step: 5
+        time_step: 3
+      critics: [
+        "ConstraintCritic", "CostCritic", "GoalCritic",
+        "GoalAngleCritic", "PathAlignCritic", "PathFollowCritic",
+        "PathAngleCritic", "PreferForwardCritic"]
+      ConstraintCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 4.0
+      GoalCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 5.0
+        threshold_to_consider: 1.4
+      GoalAngleCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 3.0
+        threshold_to_consider: 0.5
+      PreferForwardCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 5.0
+        threshold_to_consider: 0.5
+      CostCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 3.81
+        near_collision_cost: 253
+        critical_cost: 300.0
+        # Circle check (center cell cost against the inscribed radius), not the full
+        # footprint. On the 1.2 m ramp the footprint's sides sit in inflation cost ~240
+        # even when centered, so a footprint check rates nearly every sampled trajectory
+        # near-collision and MPPI creeps at ~0.01 m/s (seen in testing).
+        consider_footprint: false
+        collision_cost: 1000000.0
+        near_goal_distance: 1.0
+        trajectory_point_step: 2
+      PathAlignCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 14.0
+        # Stop pulling toward the path where an obstacle sits on it (5% of path points
+        # in collision), so the robot can swing around.
+        max_path_occupancy_ratio: 0.05
+        trajectory_point_step: 4
+        threshold_to_consider: 0.5
+        offset_from_furthest: 20
+        use_path_orientations: false
+      PathFollowCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 5.0
+        offset_from_furthest: 5
+        threshold_to_consider: 1.4
+      PathAngleCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 2.0
+        offset_from_furthest: 4
+        threshold_to_consider: 0.5
+        max_angle_to_furthest: 1.0
+        mode: 0
+
+# Local costmap: what MPPI avoids. Rolling 5 x 5 m window around the robot.
+# Frame map, not the usual odom: the EKF's odom yaw drifts with the gyro bias
+# (0.1-1 deg/s), and a costmap in a slowly turning frame smears every obstacle it
+# remembers into a wedge around the robot (seen in testing: the ramp walls closed the
+# ramp). The Quest's map frame does not drift, so remembered obstacles stay put. The
+# cost: when the Quest re-aligns (a few cm jump in map -> odom) the costmap shifts with it.
+local_costmap:
+  local_costmap:
+    ros__parameters:
+      use_sim_time: true
+      update_frequency: 10.0
+      publish_frequency: 5.0
+      global_frame: map
+      robot_base_frame: base_footprint
+      rolling_window: true
+      width: 5
+      height: 5
+      resolution: 0.05
+      # Chassis 0.406 m long; 0.536 m wide over the wheels (no margin: the ramp is tight).
+      footprint: "[[0.21, 0.27], [0.21, -0.27], [-0.21, -0.27], [-0.21, 0.27]]"
+      plugins: ["voxel_layer", "inflation_layer"]
+      voxel_layer:
+        plugin: "nav2_costmap_2d::VoxelLayer"
+        enabled: true
+        publish_voxel_map: true
+        origin_z: 0.0
+        z_resolution: 0.1
+        z_voxels: 16
+        max_obstacle_height: 1.6
+        mark_threshold: 0
+        footprint_clearing_enabled: true
+        # One cloud, two roles (see docs/navigation/route_demo.md):
+        #   depth_mark  marks voxels for points 0.30 .. 1.6 m above the ground plane of
+        #               base_footprint, up to 2.2 m away. The EKF runs in 2D (no pitch), so
+        #               where the slope changes (top and bottom of the 4.8 degree ramp) flat
+        #               ground d meters ahead appears d * tan(4.8 deg) high: 0.18 m at
+        #               2.2 m. Height and range limits keep the ramp itself out of the costmap.
+        #               Obstacles must be taller than 0.30 m to be seen.
+        #   depth_clear has no height filter and only clears: rays to floor points erase
+        #               voxels of obstacles that moved away (the walker).
+        observation_sources: depth_mark depth_clear
+        depth_mark:
+          topic: /camera/camera/depth/color/points
+          data_type: "PointCloud2"
+          sensor_frame: ""
+          marking: true
+          clearing: false
+          min_obstacle_height: 0.30
+          max_obstacle_height: 1.6
+          obstacle_max_range: 2.2
+          obstacle_min_range: 0.0
+          expected_update_rate: 0.0
+          observation_persistence: 0.0
+          inf_is_valid: false
+        depth_clear:
+          topic: /camera/camera/depth/color/points
+          data_type: "PointCloud2"
+          sensor_frame: ""
+          marking: false
+          clearing: true
+          min_obstacle_height: -2.0
+          max_obstacle_height: 2.0
+          raytrace_max_range: 3.0
+          raytrace_min_range: 0.0
+          expected_update_rate: 0.0
+          inf_is_valid: false
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        cost_scaling_factor: 6.0
+        inflation_radius: 0.45
+      always_send_full_costmap: true
+
+# Global costmap: what the Route Server's CostmapScorer checks graph edges against.
+# Fixed 20 x 14 m window in map covering the house front, ramp and driveway. No static
+# map: everything starts free and only the depth camera marks obstacles, so the robot
+# learns a blocked lane by looking at it.
+global_costmap:
+  global_costmap:
+    ros__parameters:
+      use_sim_time: true
+      update_frequency: 2.0
+      publish_frequency: 1.0
+      global_frame: map
+      robot_base_frame: base_footprint
+      rolling_window: false
+      track_unknown_space: false
+      width: 20
+      height: 14
+      origin_x: -4.0
+      origin_y: -8.0
+      resolution: 0.1
+      footprint: "[[0.21, 0.27], [0.21, -0.27], [-0.21, -0.27], [-0.21, 0.27]]"
+      plugins: ["voxel_layer", "inflation_layer"]
+      voxel_layer:
+        plugin: "nav2_costmap_2d::VoxelLayer"
+        enabled: true
+        publish_voxel_map: false
+        origin_z: 0.0
+        z_resolution: 0.1
+        z_voxels: 16
+        max_obstacle_height: 1.6
+        mark_threshold: 0
+        footprint_clearing_enabled: true
+        observation_sources: depth_mark depth_clear
+        depth_mark:
+          topic: /camera/camera/depth/color/points
+          data_type: "PointCloud2"
+          marking: true
+          clearing: false
+          min_obstacle_height: 0.30
+          max_obstacle_height: 1.6
+          obstacle_max_range: 2.2
+          obstacle_min_range: 0.0
+          inf_is_valid: false
+        depth_clear:
+          topic: /camera/camera/depth/color/points
+          data_type: "PointCloud2"
+          marking: false
+          clearing: true
+          min_obstacle_height: -2.0
+          max_obstacle_height: 2.0
+          raytrace_max_range: 3.0
+          raytrace_min_range: 0.0
+          inf_is_valid: false
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        cost_scaling_factor: 6.0
+        inflation_radius: 0.45
+      always_send_full_costmap: true
+
+# Hosts the global costmap (the Route Server only reads it). The planner itself is a
+# fallback that the demo's behavior tree does not use.
+planner_server:
+  ros__parameters:
+    use_sim_time: true
+    expected_planner_frequency: 1.0
+    planner_plugins: ["GridBased"]
+    GridBased:
+      plugin: "nav2_navfn_planner::NavfnPlanner"
+      tolerance: 0.5
+      use_astar: false
+      allow_unknown: true
+
+behavior_server:
+  ros__parameters:
+    use_sim_time: true
+    local_costmap_topic: local_costmap/costmap_raw
+    global_costmap_topic: global_costmap/costmap_raw
+    local_footprint_topic: local_costmap/published_footprint
+    global_footprint_topic: global_costmap/published_footprint
+    cycle_frequency: 10.0
+    behavior_plugins: ["backup", "wait"]
+    backup:
+      plugin: "nav2_behaviors::BackUp"
+    wait:
+      plugin: "nav2_behaviors::Wait"
+    local_frame: odom
+    global_frame: map
+    robot_base_frame: base_footprint
+    transform_tolerance: 0.2
+    simulate_ahead_time: 2.0
+    max_rotational_vel: 0.9
+    min_rotational_vel: 0.3
+    rotational_acc_lim: 1.0
+    enable_stamped_cmd_vel: true

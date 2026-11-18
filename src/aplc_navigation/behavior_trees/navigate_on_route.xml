@@ -1,0 +1,30 @@
+<!--
+  Navigate to a goal along the route graph, with obstacle avoidance and rerouting.
+
+  1. ComputeRoute asks the Route Server for a route from the robot (TF) to the goal
+     pose. The result is a dense path along the graph edges, joined to the robot's
+     pose and to the goal pose. Edges the global costmap marks as blocked are skipped
+     (CostmapScorer), so a route is only computed through lanes that look clear.
+  2. FollowPath runs MPPI on that path. MPPI is not bound to the path: it leaves it to
+     pass obstacles in the local costmap and returns to it afterwards.
+  3. If FollowPath fails (the progress checker sees no progress: the lane is blocked
+     and there is no way around) the recovery waits, then the whole sequence runs again.
+     ComputeRoute now sees the blocked edge in the global costmap and returns a route
+     through the other lane.
+
+  The route is computed once per attempt, not periodically, so an obstacle the robot
+  can drive around does not cause a reroute.
+-->
+<root BTCPP_format="4" main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+    <RecoveryNode number_of_retries="6" name="NavigateRecovery">
+      <Sequence name="RouteThenFollow">
+        <ComputeRoute goal="{goal}" use_poses="true" path="{path}" route="{route}"
+                      error_code_id="{compute_route_error_code}" server_timeout="10000"/>
+        <FollowPath path="{path}" controller_id="FollowPath" goal_checker_id="general_goal_checker"
+                    progress_checker_id="progress_checker" error_code_id="{follow_path_error_code}"/>
+      </Sequence>
+      <Wait wait_duration="3.0" name="LetCostmapSettle"/>
+    </RecoveryNode>
+  </BehaviorTree>
+</root>
