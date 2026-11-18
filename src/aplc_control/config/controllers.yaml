@@ -1,0 +1,43 @@
+# Controllers for the APLC wheel joints. In simulation, gz_ros2_control loads this
+# file (see aplc_description/urdf/aplc.gazebo.xacro).
+controller_manager:
+  ros__parameters:
+    update_rate: 50  # Hz
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+    diff_drive_controller:
+      type: diff_drive_controller/DiffDriveController
+
+diff_drive_controller:
+  ros__parameters:
+    # Four-wheel skid steering: both wheels on a side get the same command.
+    left_wheel_names: [front_left_joint, rear_left_joint]
+    right_wheel_names: [front_right_joint, rear_right_joint]
+    wheel_separation: 0.4764  # between left and right wheel centers (m)
+    wheel_radius: 0.1016      # m
+    base_frame_id: base_footprint
+    odom_frame_id: odom
+    # The EKF (aplc_localization) publishes odom -> base_footprint; only one node may.
+    # /diff_drive_controller/odom is still published and is the EKF's wheel input.
+    enable_odom_tf: false
+    # Unset reverse and deceleration limits default to the same magnitudes.
+    linear.x.max_velocity: 0.5       # m/s
+    linear.x.max_acceleration: 0.5   # m/s^2
+    angular.z.max_velocity: 1.0      # rad/s
+    angular.z.max_acceleration: 1.0  # rad/s^2
+
+    # Odometry covariance diagonals [x, y, z, roll, pitch, yaw], published on
+    # /diff_drive_controller/odom for the EKF (#9). See docs/sensors/wheel_encoders.md.
+    # Twist (velocities; what the EKF should fuse):
+    #   vx 0.001 (sd 0.03 m/s): straight runs matched ground truth in sim, but real
+    #      floors slip; ~6 % of top speed.
+    #   vy 0.001: skid steer barely slips sideways when not turning.
+    #   z, roll, pitch 1e6: wheels don't measure them.
+    #   yaw 0.25 (sd 0.5 rad/s): skid-steer slip makes the wheel turn rate read
+    #      about 1.49x the true rate in sim (about +0.33 rad/s at 1 rad/s). The error is
+    #      systematic, so this only tells the EKF to trust the gyro instead.
+    # Pose: the controller publishes these as constants (they don't grow with distance),
+    #   so the EKF should fuse the twist, not the pose. yaw 1e3: heading from wheels
+    #   is unreliable after any turn.
+    pose_covariance_diagonal: [0.01, 0.01, 1000000.0, 1000000.0, 1000000.0, 1000.0]
+    twist_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 0.25]

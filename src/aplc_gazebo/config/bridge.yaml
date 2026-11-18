@@ -1,0 +1,59 @@
+# ros_gz_bridge topics for the APLC simulation (Gazebo -> ROS unless noted).
+# Camera topic names match the realsense2_camera driver (camera_namespace:=camera,
+# camera_name:=camera, align_depth.enable:=true), so nodes work the same on hardware.
+
+- ros_topic_name: /clock
+  gz_topic_name: /clock
+  ros_type_name: rosgraph_msgs/msg/Clock
+  gz_type_name: gz.msgs.Clock
+  direction: GZ_TO_ROS
+
+# RGB-D camera (sensor <topic>camera</topic>). Frames: camera_depth_optical_frame.
+- ros_topic_name: /camera/camera/color/image_raw
+  gz_topic_name: /camera/image
+  ros_type_name: sensor_msgs/msg/Image
+  gz_type_name: gz.msgs.Image
+  direction: GZ_TO_ROS
+
+- ros_topic_name: /camera/camera/color/camera_info
+  gz_topic_name: /camera/camera_info
+  ros_type_name: sensor_msgs/msg/CameraInfo
+  gz_type_name: gz.msgs.CameraInfo
+  direction: GZ_TO_ROS
+
+# Depth is rendered from the color viewpoint, i.e. already aligned to color.
+# Encoding 32FC1 in meters (the real driver publishes 16UC1 in millimeters).
+- ros_topic_name: /camera/camera/aligned_depth_to_color/image_raw
+  gz_topic_name: /camera/depth_image
+  ros_type_name: sensor_msgs/msg/Image
+  gz_type_name: gz.msgs.Image
+  direction: GZ_TO_ROS
+
+- ros_topic_name: /camera/camera/aligned_depth_to_color/camera_info
+  gz_topic_name: /camera/camera_info
+  ros_type_name: sensor_msgs/msg/CameraInfo
+  gz_type_name: gz.msgs.CameraInfo
+  direction: GZ_TO_ROS
+
+# IMU (sensor <topic>imu</topic>), frame imu_link, 100 Hz. Covariances come from the
+# noise stddev set in aplc_description/urdf/aplc_sensors.xacro.
+- ros_topic_name: /imu
+  gz_topic_name: /imu
+  ros_type_name: sensor_msgs/msg/Imu
+  gz_type_name: gz.msgs.IMU
+  direction: GZ_TO_ROS
+
+# GROUND TRUTH: FOR EVALUATION ONLY. NEVER AN EKF (OR ANY ESTIMATOR) INPUT.
+# Exact pose of base_footprint in frame ground_truth_world, from Gazebo's
+# OdometryPublisher (aplc_description/urdf/aplc.gazebo.xacro). Only the odometry is
+# bridged: the plugin's TF topic (/ground_truth/tf) is deliberately not bridged, so the
+# only odom -> base_footprint transform on /tf stays the EKF's.
+- ros_topic_name: /ground_truth/odom
+  gz_topic_name: /ground_truth/odom
+  ros_type_name: nav_msgs/msg/Odometry
+  gz_type_name: gz.msgs.Odometry
+  direction: GZ_TO_ROS
+
+# Not bridged: /camera/points. Gazebo fills it in camera-body axes (x forward) but
+# stamps it with gz_frame_id (the optical frame), so it would appear rotated in RViz.
+# world.launch.py builds /camera/camera/depth/color/points with depth_image_proc instead.

@@ -13,11 +13,16 @@ Layout (default, meters, z up):
   - First floor: stairwell with guard rails, hallway, partition wall with a doorway,
     bedroom (bed, nightstand, dresser, desk) with DROP-OFF 2 on the floor inside the doorway.
   - Landing and ramp outside the door, railing on the outer side.
+  - Car: a true-scale Toyota RAV4 (5th gen) built from primitives, rear toward the house.
+    Its origin is the rear bumper center at ground level, +x pointing to the car's front.
 
 Examples:
   python3 gen_house_world.py -o house_ramp.sdf
   python3 gen_house_world.py --rise 0.6 --slope 15 -o house_ramp_tall.sdf
   python3 gen_house_world.py --house solid -o house_solid.sdf      # no interior
+  python3 gen_house_world.py --car-x 8 --car-y -3.0 --car-yaw 10 -o house_car_moved.sdf
+  # Installed worlds: no car (world.launch.py spawns models/rav4.sdf at car_x/car_y/car_yaw)
+  python3 gen_house_world.py --car none --car-file rav4.sdf -o house_1.sdf
 """
 import argparse
 import math
@@ -25,6 +30,8 @@ import os
 
 # A bare output filename is written into the package's worlds/ folder (next to scripts/).
 WORLDS_DIR = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "worlds"))
+# A bare --car-file name is written into the package's models/ folder.
+MODELS_DIR = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "models"))
 
 # ----------------------------------------------------------------------------- colors
 GRASS = (0.30, 0.52, 0.24)
@@ -50,9 +57,20 @@ RUG = (0.55, 0.30, 0.25)
 BLACK = (0.05, 0.05, 0.05)
 BEDDING = (0.85, 0.86, 0.90)
 DROPOFF = (1.00, 0.45, 0.00)
+CAR_PAINT = (0.16, 0.27, 0.45)
+TIRE = (0.08, 0.08, 0.08)
 
 FUEL = "https://fuel.gazebosim.org/1.0/OpenRobotics/models/"
 CARS = {"suv": "SUV", "pickup": "Pickup", "hatchback": "Hatchback", "prius": "Prius Hybrid"}
+
+# Toyota RAV4, 5th generation (2019+), published exterior dimensions (m).
+# Overhangs, clearance and beltline are approximate; the cargo floor height is
+# what the trunk lift/conveyor must meet, so measure the real car before relying on it.
+RAV4 = dict(
+    length=4.600, width=1.855, height=1.685, wheelbase=2.690, track=1.600,
+    rear_overhang=0.985, ground_clearance=0.21, tire_radius=0.362, tire_width=0.225,
+    beltline=1.05, cargo_floor=0.75,
+)
 
 
 def _geom(size):
@@ -173,6 +191,48 @@ def include(uri, name, pose):
     </include>"""
 
 
+def rav4_model(name="car", pose=(0, 0, 0, 0, 0, 0)):
+    """A static RAV4 at true scale. Origin: rear bumper center on the ground, +x toward the front."""
+    c = RAV4
+    L, W, H = c["length"], c["width"], c["height"]
+    ra, fa = c["rear_overhang"], c["rear_overhang"] + c["wheelbase"]   # rear / front axle x
+    r, tw, gc, bl = c["tire_radius"], c["tire_width"], c["ground_clearance"], c["beltline"]
+    ah = r + 0.05                          # wheel arch half-length
+    arch_top = 2 * r + 0.03
+    cabin_x1 = L - 1.25                    # windshield base; the hood is in front of it
+
+    def part(x0, x1, z0, z1, wdt, color):
+        return ((x1 - x0, wdt, z1 - z0), ((x0 + x1) / 2, 0, (z0 + z1) / 2, 0, 0, 0), color)
+
+    boxes = [
+        # lower body between the wheel arches
+        part(0, ra - ah, gc, arch_top, W, CAR_PAINT),
+        part(ra + ah, fa - ah, gc, arch_top, W, CAR_PAINT),
+        part(fa + ah, L, gc, arch_top, W, CAR_PAINT),
+        part(0, L, arch_top, bl, W, CAR_PAINT),                       # body above the arches, hood level
+        part(0.12, cabin_x1, bl, H - 0.06, W - 0.20, GLASS),          # glasshouse
+        part(0.12, cabin_x1, H - 0.06, H, W - 0.20, CAR_PAINT),       # roof
+    ]
+    out = []
+    for i, (size, p, color) in enumerate(boxes):
+        out.append(f'<collision name="c{i}">{_pose(p)}{_geom(size)}</collision>')
+        out.append(f'<visual name="v{i}">{_pose(p)}{_geom(size)}{_mat(color)}</visual>')
+    cyl = f"<geometry><cylinder><radius>{r:.4f}</radius><length>{tw:.4f}</length></cylinder></geometry>"
+    for i, (wx, wy) in enumerate([(ra, 1), (ra, -1), (fa, 1), (fa, -1)]):
+        p = _pose((wx, wy * (c["track"] / 2), r, math.pi / 2, 0, 0))
+        out.append(f'<collision name="wheel_c{i}">{p}{cyl}</collision>')
+        out.append(f'<visual name="wheel_v{i}">{p}{cyl}{_mat(TIRE)}</visual>')
+    body = "\n        ".join(out)
+    return f"""
+    <model name="{name}">
+      <static>true</static>
+      {_pose(pose)}
+      <link name="link">
+        {body}
+      </link>
+    </model>"""
+
+
 def point_light(name, x, y, z):
     return f"""
     <light type="point" name="{name}">
@@ -192,12 +252,14 @@ def main():
     ap.add_argument("--slope", type=float, default=12.0, help="horizontal run per unit rise (12 = 1:12)")
     ap.add_argument("--ramp-width", type=float, default=1.2)
     ap.add_argument("--landing-length", type=float, default=1.5, help="landing length along the wall (m)")
+    ap.add_argument("--landing-depth", type=float, default=1.52,
+                    help="landing depth out from the wall (m); ADA asks 1.52 where the route turns")
     ap.add_argument("--ramp-side", choices=["right", "left"], default="right",
                     help="direction the ramp descends from the door, seen facing the house")
     ap.add_argument("--no-railing", action="store_true")
     # house
     ap.add_argument("--house", choices=["interior", "solid", "fuel"], default="interior")
-    ap.add_argument("--door-width", type=float, default=1.0, help="clear doorway width (m)")
+    ap.add_argument("--door-width", type=float, default=0.91, help="clear doorway width (m)")
     ap.add_argument("--storey-height", type=float, default=2.9, help="floor-to-floor height (m)")
     ap.add_argument("--fuel-model", default="House 1")
     ap.add_argument("--fuel-x", type=float, default=-5.0)
@@ -207,16 +269,26 @@ def main():
     ap.add_argument("--apron-width", type=float, default=2.0)
     ap.add_argument("--driveway-length", type=float, default=12.0)
     ap.add_argument("--driveway-width", type=float, default=3.5)
-    ap.add_argument("--car", choices=list(CARS) + ["none"], default="suv")
-    ap.add_argument("--car-yaw", type=float, default=0.0, help="degrees")
+    ap.add_argument("--car", choices=["rav4"] + list(CARS) + ["none"], default="rav4",
+                    help="rav4 is built locally at true scale; the others come from Gazebo Fuel")
+    ap.add_argument("--car-x", type=float, default=7.0,
+                    help="car origin x (m); for rav4 the rear bumper center")
+    ap.add_argument("--car-y", type=float, default=None, help="car origin y (m); default: driveway center")
+    ap.add_argument("--car-yaw", type=float, default=0.0, help="degrees; 0 = front toward the street")
+    ap.add_argument("--car-file", default=None,
+                    help="also write the rav4 as a standalone model SDF (bare name: into models/)")
     a = ap.parse_args()
     if os.path.dirname(a.output) == "":
         os.makedirs(WORLDS_DIR, exist_ok=True)
         a.output = os.path.join(WORLDS_DIR, a.output)
+    if a.car_file and os.path.dirname(a.car_file) == "":
+        os.makedirs(MODELS_DIR, exist_ok=True)
+        a.car_file = os.path.join(MODELS_DIR, a.car_file)
 
     # The interior layout is designed for this footprint and door position.
     W, D, door_y, t = 10.0, 8.0, 3.5, 0.2
     rise, rw, L, dw_door = a.rise, a.ramp_width, a.landing_length, a.door_width
+    Ld = max(a.landing_depth, rw)   # the ramp joins the landing along the wall side
     run = rise * a.slope
     th = math.atan2(rise, run)
     slope_len = math.hypot(run, rise)
@@ -387,7 +459,7 @@ def main():
 
     elif a.house == "solid":
         m.append(box("house_body", (D, W, z_roof - rise), (-D / 2, 0, (rise + z_roof) / 2, 0, 0, 0), WALL))
-        m.append(box("door", (0.02, 0.95, 2.1), (0.01, door_y, rise + 1.05, 0, 0, 0), DOOR, collision=False))
+        m.append(box("door", (0.02, dw_door, 2.1), (0.01, door_y, rise + 1.05, 0, 0, 0), DOOR, collision=False))
         for i, wy in enumerate([-3.0, 0.5]):
             m.append(box(f"window_{i}", (0.02, 1.5, 1.25), (0.01, wy, rise + 1.55, 0, 0, 0), GLASS, collision=False))
     else:
@@ -413,7 +485,7 @@ def main():
         m.append(compound("roof", roof))
 
     # ----------------------------------------------------------------- landing and ramp
-    m.append(box("landing", (rw, L, rise), (rw / 2, my(door_y), rise / 2, 0, 0, 0), WOOD))
+    m.append(box("landing", (Ld, L, rise), (Ld / 2, my(door_y), rise / 2, 0, 0, 0), WOOD))
     T = rise / math.cos(th) + 0.10          # thick enough that the underside is below ground everywhere
     ym = (y_top + y_bot) / 2
     m.append(box("ramp", (rw, slope_len, T),
@@ -431,24 +503,41 @@ def main():
         for hz in rail_zs:
             rail.append(((rail_t, slope_len, rail_h), (xr, my(ym), deck_z(ym) + hz, sgn * th, 0, 0), RAIL))
         y_far = y_top + L
-        rail.append(((ps, ps, post_h), (xr, my(y_far - ps / 2), rise + post_h / 2, 0, 0, 0), RAIL))
+        xl = Ld - ps / 2                    # landing outer edge
+        rail.append(((ps, ps, post_h), (xl, my(y_far - ps / 2), rise + post_h / 2, 0, 0, 0), RAIL))
         rail.append(((ps, ps, post_h), (ps / 2 + 0.02, my(y_far - ps / 2), rise + post_h / 2, 0, 0, 0), RAIL))
         for hz in rail_zs:
-            rail.append(((rail_t, L, rail_h), (xr, my(y_top + L / 2), rise + hz, 0, 0, 0), RAIL))
-            rail.append(((rw, rail_t, rail_h), (rw / 2, my(y_far - ps / 2), rise + hz, 0, 0, 0), RAIL))
+            rail.append(((rail_t, L, rail_h), (xl, my(y_top + L / 2), rise + hz, 0, 0, 0), RAIL))
+            rail.append(((Ld, rail_t, rail_h), (Ld / 2, my(y_far - ps / 2), rise + hz, 0, 0, 0), RAIL))
+        if Ld - rw > ps:
+            # close the landing edge that overhangs the ramp's outer side
+            rail.append(((ps, ps, post_h), (xl, my(y_top + ps / 2), rise + post_h / 2, 0, 0, 0), RAIL))
+            for hz in rail_zs:
+                rail.append(((Ld - rw + ps, rail_t, rail_h), ((rw - ps + Ld) / 2, my(y_top + ps / 2), rise + hz, 0, 0, 0), RAIL))
         m.append(compound("ramp_railing", rail))
 
     # ----------------------------------------------------------------- car
-    if a.car != "none":
-        m.append(include(FUEL + CARS[a.car], "car", (dx0 + 0.6 * a.driveway_length, drv_y, 0, 0, 0, math.radians(a.car_yaw))))
+    car_y = drv_y if a.car_y is None else a.car_y
+    car_pose = (a.car_x, car_y, 0, 0, 0, math.radians(a.car_yaw))
+    if a.car == "rav4":
+        m.append(rav4_model("car", car_pose))
+    elif a.car != "none":
+        m.append(include(FUEL + CARS[a.car], "car", car_pose))
+    if a.car_file:
+        with open(a.car_file, "w") as f:
+            f.write('<?xml version="1.0" ?>\n<!-- Toyota RAV4 (5th gen) at true scale, generated by gen_house_world.py.\n'
+                    '     Origin: rear bumper center on the ground, +x toward the front. -->\n'
+                    '<sdf version="1.9">' + rav4_model("car") + "\n</sdf>\n")
+        print(f"wrote {a.car_file}")
 
     spawn_in = (-1.2, door_y, z1 + 0.10)
-    spawn_landing = (rw / 2, my(door_y), rise + 0.10)
+    spawn_landing = (Ld / 2, my(door_y), rise + 0.10)
     note_lines = "\n".join(f"       {k}: {v}" for k, v in notes.items())
     header = f"""<?xml version="1.0" ?>
 <!-- APLC test world, generated by gen_house_world.py.
        rise {rise:.2f} m, ramp 1:{a.slope:g} ({math.degrees(th):.2f} deg, run {run:.2f} m), ramp width {rw:.2f} m,
-       landing {rw:.2f} x {L:.2f} m, ramp side {a.ramp_side}, house {a.house}, doorway {dw_door:.2f} m, car {a.car}
+       landing {Ld:.2f} deep x {L:.2f} m, ramp side {a.ramp_side}, house {a.house}, doorway {dw_door:.2f} m,
+       car {a.car}{f" at x {a.car_x:.2f} y {car_y:.2f} yaw {a.car_yaw:g} deg" if a.car != "none" else " (spawned by world.launch.py)"}
 {note_lines}
      Suggested robot spawns:
        inside, facing the front door: x {spawn_in[0]:.2f} y {spawn_in[1]:.2f} z {spawn_in[2]:.2f} yaw 0

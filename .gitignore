@@ -9,3 +9,6 @@ __pycache__/
 .DS_Store
 .env
 .env.tmp.*
+
+# EKF evaluation rosbags (ros2 run aplc_localization ekf_eval)
+eval_bags/

@@ -94,7 +94,7 @@ bash scripts/docker-gazebo.sh
 ```
 
 This starts Gazebo Harmonic's server and GUI with the selected house world
-paused and spawns APLC at `(5, -3, 0.25)`. It uses X11
+paused and spawns APLC at `(5, -3, 0.05)`. It uses X11
 or XWayland (including a Wayland desktop), and requires `xauth` on the host.
 The launcher copies the current display authentication cookie into a temporary
 file, mounts it read-only, and removes it when the container exits. It does not
@@ -239,7 +239,7 @@ bash scripts/docker-dev.sh down --remove-orphans
 ```
 
 The world launch also starts the robot description publisher and spawns the
-base APLC model (without cargo) at world coordinates `(5, -3, 0.25)` meters
+base APLC model (without cargo) at world coordinates `(5, -3, 0.05)` meters
 with zero roll, pitch, and yaw. Gazebo starts paused; wait for the robot to
 appear before pressing Play. Gravity then lets it settle onto the driveway,
 so its height will change from the initial spawn value.
@@ -268,6 +268,26 @@ Fuel; the first load needs network access to download it.
 - Bump switches and emergency stop
 
 Actual sensor selection and hardware interfaces are subject to change. Safety mechanisms must be validated on physical hardware before real-world use.
+
+## Sensors
+
+Simulated sensors are documented in [`docs/sensors/`](docs/sensors/): what each one
+models, its ROS topic and frame, noise parameters and their datasheet sources, how to
+verify it, and known gaps between simulation and hardware.
+
+| Sensor | Hardware | ROS topic | Docs |
+|---|---|---|---|
+| IMU | CEVA BNO085 | `/imu` | [docs/sensors/imu.md](docs/sensors/imu.md) |
+| RGB-D camera | Intel RealSense D435 | `/camera/camera/...` | [instructions.md](instructions.md) |
+| Wheel encoders | — | `/joint_states`, `/wheel_encoders`, `/diff_drive_controller/odom` | [docs/sensors/wheel_encoders.md](docs/sensors/wheel_encoders.md) |
+
+## Localization
+
+An EKF (`robot_localization`, package `aplc_localization`) fuses wheel odometry and the
+IMU into `/odometry/filtered` and the `odom → base_footprint` transform. It starts with
+`ros2 launch aplc_gazebo world.launch.py`. Frames, fused inputs, covariances, the
+evaluation tool and results against Gazebo ground truth:
+[docs/localization/ekf.md](docs/localization/ekf.md).
 
 ## Project status
 
