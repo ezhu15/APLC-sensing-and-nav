@@ -10,11 +10,18 @@
   <xacro:arg name="camera_model" default="d435"/>
   <xacro:arg name="camera_xyz" default="${length / 2 + 0.003} 0 0.02"/>
   <xacro:arg name="camera_rpy" default="0 0 0"/>
+  <!-- Image size and frame rate. Lower them on slow machines; the depth point cloud and
+       any costmap fed by it scale with width x height x rate. -->
+  <xacro:arg name="camera_width" default="848"/>
+  <xacro:arg name="camera_height" default="480"/>
+  <xacro:arg name="camera_rate" default="30"/>
   <xacro:if value="$(arg camera)">
     <xacro:include filename="$(find realsense2_description)/urdf/_$(arg camera_model).urdf.xacro"/>
     <xacro:include filename="aplc_camera.xacro"/>
     <xacro:aplc_rgbd_camera model="$(arg camera_model)" parent="base_link"
-                            xyz="$(arg camera_xyz)" rpy="$(arg camera_rpy)"/>
+                            xyz="$(arg camera_xyz)" rpy="$(arg camera_rpy)"
+                            width="$(arg camera_width)" height="$(arg camera_height)"
+                            rate="$(arg camera_rate)"/>
   </xacro:if>
 
   <!-- IMU: CEVA BNO085. Default mount: chassis center, which is the center of mass
