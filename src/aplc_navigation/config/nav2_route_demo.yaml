@@ -114,7 +114,7 @@ controller_server:
       ay_max: 0.0
       ay_min: 0.0
       az_max: 1.0               # angular.z.max_acceleration
-      vx_std: 0.2
+      vx_std: 0.3
       vy_std: 0.0
       wz_std: 0.4
       vx_max: 0.4               # under the controller's 0.5 m/s limit
@@ -183,8 +183,10 @@ controller_server:
       PathFollowCritic:
         enabled: true
         cost_power: 1
-        cost_weight: 5.0
-        offset_from_furthest: 5
+        cost_weight: 10.0
+        # Pull toward a point 1 m ahead on the path (default 5 points = 0.25 m): with
+        # the short default the robot crawled at ~0.06 m/s in testing.
+        offset_from_furthest: 20
         threshold_to_consider: 1.4
       PathAngleCritic:
         enabled: true

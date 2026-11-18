@@ -110,6 +110,9 @@ class RouteDemo(Node):
             return
         seq = [self.names.get(n.nodeid, str(n.nodeid)) for n in res.route.nodes]
         self.path = [(p.pose.position.x, p.pose.position.y) for p in res.path.poses]
+        # A route that is just the remaining tail of the current one is progress, not a reroute.
+        if self.route is not None and seq == self.route[len(self.route) - len(seq):]:
+            return
         if seq != self.route:
             kind = 'route' if self.route is None else 'REROUTE'
             self.route = seq
