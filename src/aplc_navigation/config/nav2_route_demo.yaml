@@ -77,6 +77,10 @@ controller_server:
     use_sim_time: true
     # Publish geometry_msgs/TwistStamped, which diff_drive_controller (Jazzy) expects.
     enable_stamped_cmd_vel: true
+    # Current velocity for MPPI's motion model. The default (/odom) has no publisher
+    # here, so MPPI believed the robot was standing still every cycle and, with its
+    # acceleration limit, never commanded more than ~0.1 m/s (seen in testing).
+    odom_topic: /odometry/filtered
     # MPPI needs model_dt >= the control period: 10 Hz with model_dt 0.1 halves the
     # work of the Nav2 default (20 Hz, 0.05) for the same 3 s horizon.
     controller_frequency: 10.0
@@ -89,11 +93,11 @@ controller_server:
     goal_checker_plugins: ["general_goal_checker"]
     controller_plugins: ["FollowPath"]
     use_realtime_priority: false
-    # "Stuck" = moved less than 0.3 m in 8 s. That is what ends a blocked-lane attempt.
+    # "Stuck" = moved less than 0.3 m in 12 s. That is what ends a blocked-lane attempt.
     progress_checker:
       plugin: "nav2_controller::SimpleProgressChecker"
       required_movement_radius: 0.3
-      movement_time_allowance: 8.0
+      movement_time_allowance: 12.0
     general_goal_checker:
       stateful: true
       plugin: "nav2_controller::SimpleGoalChecker"
@@ -116,7 +120,7 @@ controller_server:
       az_max: 1.0               # angular.z.max_acceleration
       vx_std: 0.3
       vy_std: 0.0
-      wz_std: 0.4
+      wz_std: 0.6               # wider turning samples: more ways around an obstacle
       vx_max: 0.4               # under the controller's 0.5 m/s limit
       vx_min: -0.2
       vy_max: 0.0
@@ -158,7 +162,10 @@ controller_server:
       CostCritic:
         enabled: true
         cost_power: 1
-        cost_weight: 3.81
+        # 3.81 is the Nav2 default. Raised (with PathAlignCritic lowered) so obstacle
+        # cost can outweigh staying on the route line: with the defaults the robot
+        # would not leave the route by even 0.3 m to pass a box and waited for a reroute.
+        cost_weight: 8.0
         near_collision_cost: 253
         critical_cost: 300.0
         # Circle check (center cell cost against the inscribed radius), not the full
@@ -172,7 +179,7 @@ controller_server:
       PathAlignCritic:
         enabled: true
         cost_power: 1
-        cost_weight: 14.0
+        cost_weight: 6.0          # Nav2 default 14.0; see CostCritic
         # Stop pulling toward the path where an obstacle sits on it (5% of path points
         # in collision), so the robot can swing around.
         max_path_occupancy_ratio: 0.05
@@ -183,10 +190,8 @@ controller_server:
       PathFollowCritic:
         enabled: true
         cost_power: 1
-        cost_weight: 10.0
-        # Pull toward a point 1 m ahead on the path (default 5 points = 0.25 m): with
-        # the short default the robot crawled at ~0.06 m/s in testing.
-        offset_from_furthest: 20
+        cost_weight: 5.0
+        offset_from_furthest: 5
         threshold_to_consider: 1.4
       PathAngleCritic:
         enabled: true
@@ -263,10 +268,14 @@ local_costmap:
           raytrace_min_range: 0.0
           expected_update_rate: 0.0
           inf_is_valid: false
+      # A long, gentle slope: MPPI needs a cost gradient well before an obstacle to
+      # start steering around it. With 0.45 m / 6.0 the robot stopped 0.3 m short of
+      # a box on the path and waited for a reroute. On the 1.2 m ramp the centerline
+      # (0.6 m from the wall and the railing) still costs only ~65.
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 6.0
-        inflation_radius: 0.45
+        cost_scaling_factor: 3.5
+        inflation_radius: 0.9
       always_send_full_costmap: true
 
 # Global costmap: what the Route Server's CostmapScorer checks graph edges against.

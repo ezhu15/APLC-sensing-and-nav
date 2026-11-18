@@ -81,6 +81,7 @@ class RouteDemo(Node):
         self.max_dev = (0.0, None)
         self.loc_err = []
         self.feedback = None
+        self.track = []           # (sim time, true x, true y, estimated x, estimated y)
 
     def on_gt(self, msg):
         self.gt = (msg.pose.pose.position.x, msg.pose.pose.position.y)
@@ -130,6 +131,7 @@ class RouteDemo(Node):
             tf = self.tf_buffer.lookup_transform('map', 'base_footprint', Time())
             t = tf.transform.translation
             self.loc_err.append(math.hypot(t.x - self.gt[0], t.y - self.gt[1]))
+            self.track.append((self.get_clock().now().nanoseconds * 1e-9, *self.gt, t.x, t.y))
         except TransformException:
             pass
 
@@ -219,6 +221,7 @@ def main():
     ap.add_argument('--graph', default=os.path.join(
         get_package_share_directory('aplc_navigation'), 'graphs', 'house_route.geojson'))
     ap.add_argument('--timeout', type=float, default=240.0, help='seconds (sim time)')
+    ap.add_argument('--csv', help='write the true and estimated track (5 Hz) to this CSV file')
     a, ros_args = ap.parse_known_args()
     nodes, names = load_graph(a.graph)
     if a.x is not None and a.y is not None:
@@ -234,6 +237,10 @@ def main():
         ok = node.run(x, y, yaw, a.timeout)
     except KeyboardInterrupt:
         ok = False
+    if a.csv:
+        with open(a.csv, 'w') as f:
+            f.write('t,true_x,true_y,est_x,est_y\n')
+            f.writelines(','.join(f'{v:.3f}' for v in row) + '\n' for row in node.track)
     node.destroy_node()
     if rclpy.ok():
         rclpy.shutdown()
