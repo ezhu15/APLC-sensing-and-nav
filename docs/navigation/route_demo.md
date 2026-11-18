@@ -43,8 +43,18 @@ with `gui:=false rviz:=false`. Other launch arguments: `headset_height` (1.0 m),
 summary scored against Gazebo's true pose (time, reroutes, largest distance from the route
 path, localization error, final error). `--csv FILE` saves the true and estimated track.
 
-In RViz: route graph (markers), the path the controller follows (cyan), MPPI's chosen
-trajectory (yellow), local and global costmaps, the headset's point cloud and the Quest pose.
+In RViz (`rviz/route_demo.rviz`):
+
+- **Route graph (named)**: `route_graph_viz` draws the graph from the same GeoJSON with node
+  names, at floor height (landing 0.45 m, ramp sloped). Edges are grey; the edges of the
+  current route are orange, so a reroute shows as the orange line jumping from lane A to
+  lane B. The Route Server's own `/route_graph` (small dots with node ids, at z = 0) is in
+  the list but off.
+- **Route path** (cyan, `/plan`): the dense path the Route Server built from the route.
+- **MPPI optimal** (yellow): the trajectory MPPI chose this cycle; **MPPI samples** (off) are
+  the candidate rollouts.
+- Local and global costmaps, the headset's point cloud (faint, colored by height), the
+  Quest pose and the robot model.
 
 ## How it fits together
 

@@ -3,8 +3,6 @@ Panels:
 - Class: rviz_common/Displays
   Name: Displays
   Tree Height: 400
-- Class: rviz_common/Views
-  Name: Views
 - Class: nav2_rviz_plugins/Navigation 2
   Name: Navigation 2
 Visualization Manager:
@@ -71,9 +69,19 @@ Visualization Manager:
     Visual Enabled: true
     Collision Enabled: false
   - Class: rviz_default_plugins/MarkerArray
-    Name: Route graph
+    Name: Route graph (named, active route orange)
     Enabled: true
     Value: true
+    Topic:
+      Depth: 1
+      Durability Policy: Transient Local
+      History Policy: Keep Last
+      Reliability Policy: Reliable
+      Value: /route_graph_viz
+  - Class: rviz_default_plugins/MarkerArray
+    Name: Route graph (Route Server, node ids)
+    Enabled: false
+    Value: false
     Topic:
       Depth: 5
       Durability Policy: Transient Local
@@ -81,7 +89,7 @@ Visualization Manager:
       Reliability Policy: Reliable
       Value: /route_graph
   - Class: rviz_default_plugins/Path
-    Name: Route path (controller input)
+    Name: Route path (Route Server)
     Enabled: true
     Value: true
     Color: 0; 200; 255
@@ -93,7 +101,7 @@ Visualization Manager:
       Durability Policy: Volatile
       History Policy: Keep Last
       Reliability Policy: Reliable
-      Value: /received_global_plan
+      Value: /plan
   - Class: rviz_default_plugins/MarkerArray
     Name: MPPI samples
     Enabled: false
@@ -124,8 +132,12 @@ Visualization Manager:
     Size (m): 0.03
     Style: Points
     Size (Pixels): 2
-    Color Transformer: RGB8
-    Alpha: 0.6
+    Color Transformer: AxisColor
+    Axis: Z
+    Autocompute Value Bounds: false
+    Min Value: 0.0
+    Max Value: 1.2
+    Alpha: 0.2
     Decay Time: 0
     Topic:
       Depth: 5
@@ -183,10 +195,10 @@ Visualization Manager:
       Class: rviz_default_plugins/Orbit
       Name: Current View
       Target Frame: <Fixed Frame>
-      Distance: 14.0
+      Distance: 15.0
       Focal Point:
-        X: 3.0
-        Y: -0.5
+        X: 2.2
+        Y: 0.0
         Z: 0.0
       Pitch: 1.0
       Yaw: 3.6

@@ -6,4 +6,5 @@ install(DIRECTORY config launch behavior_trees rviz graphs DESTINATION share/${P
 install(PROGRAMS scripts/fake_quest.py DESTINATION lib/${PROJECT_NAME} RENAME fake_quest)
 install(PROGRAMS scripts/obstacles.py DESTINATION lib/${PROJECT_NAME} RENAME obstacles)
 install(PROGRAMS scripts/route_demo.py DESTINATION lib/${PROJECT_NAME} RENAME route_demo)
+install(PROGRAMS scripts/route_graph_viz.py DESTINATION lib/${PROJECT_NAME} RENAME route_graph_viz)
 ament_package()

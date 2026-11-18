@@ -73,12 +73,16 @@ def setup(context):
         Node(package='nav2_lifecycle_manager', executable='lifecycle_manager', name='lifecycle_manager_navigation',
              output='screen', parameters=[sim, {'autostart': True, 'node_names': NAV2_NODES, 'bond_timeout': float(arg('bond_timeout'))}]),
     ]
+    graph_viz = Node(
+        package='aplc_navigation', executable='route_graph_viz', name='route_graph_viz', output='screen',
+        parameters=[sim, {'graph_filepath': arg('graph')}],
+    )
     rviz = Node(
         package='rviz2', executable='rviz2', output='screen', condition=IfCondition(arg('rviz')),
         arguments=['-d', share('rviz', 'route_demo.rviz')], parameters=[sim],
     )
     # Nav2 waits for TF (map -> odom needs the EKF and the Quest), so give Gazebo a head start.
-    return [world, quest, TimerAction(period=float(arg('nav2_delay')), actions=nav2), rviz]
+    return [world, quest, TimerAction(period=float(arg('nav2_delay')), actions=nav2), graph_viz, rviz]
 
 
 def generate_launch_description():
