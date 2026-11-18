@@ -19,7 +19,13 @@ from launch_ros.substitutions import FindPackageShare
 def gz_sim(context, world):
     """Gazebo command line from the gui, paused, seed and render_engine arguments."""
     arg = lambda name: LaunchConfiguration(name).perform(context)
-    cmd = ['gz', 'sim', '-v', '3', '--render-engine', arg('render_engine')]
+    gui_config = PathJoinSubstitution([
+        FindPackageShare('aplc_gazebo'), 'config', 'gui.config'
+    ]).perform(context)
+    cmd = [
+        'gz', 'sim', '-v', '3', '--render-engine', arg('render_engine'),
+        '--gui-config', gui_config,
+    ]
     if arg('paused').lower() != 'true':
         cmd.append('-r')      # run immediately; spawning works either way
     if arg('gui').lower() != 'true':
@@ -140,7 +146,7 @@ def generate_launch_description():
                         'With false, nothing publishes that transform.',
         ),
         DeclareLaunchArgument(
-            'rviz', default_value='false',
+            'rviz', default_value='true',
             description='Also open RViz with the robot, TF, depth cloud and camera image.',
         ),
         DeclareLaunchArgument(
@@ -168,6 +174,12 @@ def generate_launch_description():
                 ]),
                 'use_sim_time': True,
             }],
+            output='screen',
+        ),
+        Node(
+            package='aplc_gazebo',
+            executable='stamp_cmd_vel',
+            parameters=[{'use_sim_time': True}],
             output='screen',
         ),
         # Colored point cloud from the aligned depth and color images, in the optical

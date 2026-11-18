@@ -8,6 +8,13 @@
   gz_type_name: gz.msgs.Clock
   direction: GZ_TO_ROS
 
+# Gazebo's Drive APLC panel publishes unstamped velocity commands.
+- ros_topic_name: /gui/cmd_vel
+  gz_topic_name: /gui/cmd_vel
+  ros_type_name: geometry_msgs/msg/Twist
+  gz_type_name: gz.msgs.Twist
+  direction: GZ_TO_ROS
+
 # RGB-D camera (sensor <topic>camera</topic>). Frames: camera_depth_optical_frame.
 - ros_topic_name: /camera/camera/color/image_raw
   gz_topic_name: /camera/image
